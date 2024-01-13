@@ -9,3 +9,6 @@ Currently, two official plugins are available:
 
 
 - (https://chic-arithmetic-3e447a.netlify.app) live site
+
+- Dev Jaydeep Kulkarni 
+- Designer UI/UX Gaurav Mali
