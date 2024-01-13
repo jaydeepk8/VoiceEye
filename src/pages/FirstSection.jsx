@@ -83,10 +83,10 @@ const CenteredSvg = styled.svg`
 `;
 
 const TextBelowSvg = styled.div`
-  color: white;
+color: darkgray;
    font-family: K2D;
   font-size: 12px;
-  font-style: normal;
+  font-style: italic;
   font-weight: 400;
   line-height: normal;
   user-select: none;
@@ -112,17 +112,17 @@ const BottomText = styled.div`
   width: 315px;
   height: 69px;
   flex-shrink: 0;
-  color: #FFF;
+  color: darkgray;
   font-family: K2D;
   font-size: 16px;
   font-style: italic;
-  font-weight: 100;
+  font-weight: 50;
   line-height: normal;
-  color: white;
   margin-left: 1500px;
   margin-right: 90px;
   margin-bottom: 50px;
   user-select: none;
+
 `;
 
 function FirstSection() {

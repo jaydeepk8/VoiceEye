@@ -37,10 +37,12 @@ const NavLinks = styled.div`
 const NavLink = styled.div`
   margin-left: 50px;
   cursor: pointer;
-  color: white;
+  color: darkgray;
   font-family: K2D;
   font-size: 14px;
+  font-weight: 50;
   user-select: none;
+ 
 `;
 
 
