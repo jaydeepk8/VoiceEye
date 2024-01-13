@@ -1,6 +1,6 @@
 :root{
     --whiteColor: white;
-
+    --backgroundColor: linear-gradient(120deg, #162A28 26.38%, rgba(3, 3, 3, 0.81) 107.03%);
     // sizing
     --xs-sizing: 8px;
     --s-sizing: 16px;
@@ -18,5 +18,7 @@
 
 
 body{
+    margin: 0;
     font-family: Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
 }

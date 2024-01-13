@@ -1,22 +1,23 @@
-import './Library.scss'
 import React from "react";
-import {
-  Routes,
-  Route,
-} from "react-router-dom";
-
-import Page1 from './pages/Page1';
-import Home from './Home';
+import { Routes, Route, useLocation } from "react-router-dom";
+import Header from './Component/header/Header'; 
+import FirstSection from './pages/FirstSection';
+import Preloader from './Preloader';
+import SecondSection from './pages/SecondSection';
 
 function App() {
+  const location = useLocation(); 
 
   return (
-    <Routes>
-      <Route path="/" exact element={<Home />}/>
-      <Route path="/page1" element={<Page1 />}/>
-   </Routes>
-  )
+    <>
+      {location.pathname !== '/' && <Header />} 
+      <Routes>
+        <Route path="/" element={<Preloader />} />
+        <Route path="/FirstSection" element={<FirstSection />} />
+        <Route path="/SecondSection" element={<SecondSection />} />
+      </Routes>
+    </>
+  );
 }
 
-
-export default App
+export default App;
