@@ -3,14 +3,16 @@ import styled from "styled-components";
 
 const Container = styled.div`
   position: relative; // Establish relative positioning context
+
   
 `;
 
 
 
 const MainSection = styled.div`
-  width: 890.743px;
-  height: 700px;
+  background-color: #040D11;
+  width: 100vw; // Full viewport width
+  height: 100vh; // Full viewport height
   position: relative;
   z-index: 1;
 
@@ -22,9 +24,11 @@ const MainSection = styled.div`
     right: 0;
     bottom: 0;
     background-image: url('/assets/images/FirstSectionImg.png');
+    
     background-size: contain;
     background-repeat: no-repeat;
-    opacity: 0.5; // Adjust the opacity as needed
+    opacity: 0.80; // Adjust the opacity as needed
+    mix-blend-mode: color-dodge; // Add Color Dodge effect
     z-index: -1;
   }
 `;
@@ -57,7 +61,10 @@ const FullPageContainer = styled.div`
   width: 100vw;     // 100% of the viewport width
   height: 100vh;    // 100% of the viewport height
   display: flex;
+  // background-image: url('/assets/images/FirstSectionImg.png');
   justify-content: center;
+  // background-color: #040D11;
+
   align-items: center;
 `;
 
@@ -76,17 +83,18 @@ const CenteredSvg = styled.svg`
 `;
 
 const TextBelowSvg = styled.div`
-  color: black;
-  font-family: 'Oooh Baby', sans-serif;
+  color: white;
+   font-family: K2D;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
   line-height: normal;
-  margin-top: 500px;  // Adjust this value for spacing between the SVG and the text
+  margin-top: 600px;  // Adjust this value for spacing between the SVG and the text
   
 `;
 
 const BottomTextContainer = styled.div`
+font-family: 'Oooh Baby', sans-serif;
   position: absolute; // Positioning relative to the FullPageContainer
   bottom: 20px;
   width: 100%; // Ensure it spans the width of the page
@@ -108,7 +116,7 @@ const BottomText = styled.div`
   font-style: italic;
   font-weight: 100;
   line-height: normal;
-  color: black;
+  color: white;
   margin-left: 1500px;
   margin-right: 90px;
   margin-bottom: 50px;
