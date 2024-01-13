@@ -6,7 +6,7 @@ const StyledPage = styled.div`
 `;
 
 
-function Page1(props) {
+function Hero(props) {
     return (
         <StyledPage>
             <h1>Je suis page1</h1>
@@ -14,4 +14,4 @@ function Page1(props) {
     );
 }
 
-export default Page1;
+export default Hero;
