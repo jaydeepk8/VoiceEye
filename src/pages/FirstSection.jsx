@@ -50,7 +50,7 @@ const Title = styled.h1`
     letter-spacing: 0.1em; // Spacing between letters, adjust as needed
     text-align: center; // Center align the text
     z-index: 2;
-    
+    user-select: none; // Disable text selection
 `;
 
 
@@ -89,7 +89,7 @@ const TextBelowSvg = styled.div`
   font-style: normal;
   font-weight: 400;
   line-height: normal;
- 
+  user-select: none;
    margin-top: 680px;  // Adjust this value for spacing between the SVG and the text
   
 `;
@@ -101,6 +101,7 @@ font-family: 'Oooh Baby', sans-serif;
   width: 100%; // Ensure it spans the width of the page
   display: flex;
   justify-content: center; // This centers the BottomText
+  user-select: none;
 `;
 
 const BottomText = styled.div`
@@ -121,6 +122,7 @@ const BottomText = styled.div`
   margin-left: 1500px;
   margin-right: 90px;
   margin-bottom: 50px;
+  user-select: none;
 `;
 
 function FirstSection() {
