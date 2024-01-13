@@ -77,7 +77,7 @@ const SvgContainer = styled.div`
 
 const CenteredSvg = styled.svg`
   position: absolute;
-  top: 78%;  // Adjust this value to move the SVG down
+  top: 82%;  // Adjust this value to move the SVG down
   left: 50%;
   transform: translate(-50%, -40%);  // Adjust the second value to fine-tune the vertical position
 `;
@@ -89,7 +89,8 @@ const TextBelowSvg = styled.div`
   font-style: normal;
   font-weight: 400;
   line-height: normal;
-  margin-top: 600px;  // Adjust this value for spacing between the SVG and the text
+ 
+   margin-top: 680px;  // Adjust this value for spacing between the SVG and the text
   
 `;
 
