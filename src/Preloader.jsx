@@ -34,7 +34,7 @@ const StyledHoverWrapper = styled.div`
 `;
 
 
-//outer
+//inner
 const StyledSvg1 = styled.svg`
   width: 250px;
   height: 250px;
@@ -57,7 +57,7 @@ const StyledSvg1 = styled.svg`
 `;
 
 
-//inner
+//outer
 const StyledSvg2 = styled.svg`
   --bg-size: 400%;
   --color-one: rgb(195, 140, 92); // RGB color
@@ -89,7 +89,7 @@ const StyledH2 = styled.h2`
   --color-one: hsl(40, 47%, 56%); // RGB color converted to HSL
   --color-two: hsl(30, 47%, 46%); // Darker shade of the same color
   font-family: 'Orbitron', sans-serif;
-  font-size: 32px;
+  font-size: 16px;
   font-style: normal;
   user-select: none;
   font-weight: 400;
