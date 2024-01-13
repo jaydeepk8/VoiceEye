@@ -23,6 +23,7 @@ const Logo = styled.div`
   font-weight: 400;
   line-height: normal;
   margin-left: 200px;
+  user-select: none;
 `;
 
 const NavLinks = styled.div`
@@ -39,6 +40,7 @@ const NavLink = styled.div`
   color: white;
   font-family: K2D;
   font-size: 14px;
+  user-select: none;
 `;
 
 
