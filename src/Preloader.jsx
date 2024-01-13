@@ -88,6 +88,7 @@ const StyledH2 = styled.h2`
   font-family: 'Orbitron', sans-serif;
   font-size: 32px;
   font-style: normal;
+  user-select: none;
   font-weight: 400;
   letter-spacing: 0.32px;
   position: absolute;
@@ -115,6 +116,7 @@ const StyledH4 = styled.h4`
   left: 50%;
   transform: translate(-50%, 10%);
   margin: 0;
+  user-select: none;
 `;
 
 function Preloader() {
