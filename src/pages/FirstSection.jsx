@@ -1,5 +1,7 @@
 import React from "react";
 import styled from "styled-components";
+import Header from '../Component/header/Header'; 
+
 
 const Container = styled.div`
   position: relative; // Establish relative positioning context
@@ -31,6 +33,12 @@ const MainSection = styled.div`
     mix-blend-mode: color-dodge; // Add Color Dodge effect
     z-index: -1;
   }
+
+  @media (max-width: 768px) {
+
+    font-size: 32px;
+  
+  }
 `;
 
 
@@ -51,28 +59,29 @@ const Title = styled.h1`
     text-align: center; // Center align the text
     z-index: 2;
     user-select: none; // Disable text selection
+    @media (max-width: 768px) {
+      font-size: 1em;
+     
+      
+    }
 `;
-
 
 const FullPageContainer = styled.div`
-  position: relative;  // Or 'absolute' if you want it relative to its parent container
-  top: 0;
-  left: 0;
-  width: 100vw;     // 100% of the viewport width
-  height: 100vh;    // 100% of the viewport height
   display: flex;
-  // background-image: url('/assets/images/FirstSectionImg.png');
-  justify-content: center;
-  // background-color: #040D11;
-
+  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
+  height: 100%;
 `;
-
 const SvgContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  
+  margin: 20px 0;
+
+  @media (max-width: 768px) {
+    margin: 10px 0;
+  }
 `;
 
 const CenteredSvg = styled.svg`
@@ -80,77 +89,102 @@ const CenteredSvg = styled.svg`
   top: 82%;  // Adjust this value to move the SVG down
   left: 50%;
   transform: translate(-50%, -40%);  // Adjust the second value to fine-tune the vertical position
-`;
+
+// circle animation here
+
+rect {
+  fill: none;
+  stroke: white;
+  
+}
+
+circle {
+  fill: #D9D9D9;
+  animation: moveUpDown 2s ease-in-out infinite;
+}
+
+@keyframes moveUpDown {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+  `;
 
 const TextBelowSvg = styled.div`
-color: darkgray;
-   font-family: K2D;
+  color: darkgray;
+  font-family: K2D;
   font-size: 12px;
   font-style: italic;
   font-weight: 400;
   line-height: normal;
   user-select: none;
-   margin-top: 680px;  // Adjust this value for spacing between the SVG and the text
+  margin-top: 770px;  // Adjust this value for spacing between the SVG and the text
   
+  @media (max-width: 768px) {
+    margin-top: 770px;  // Adjust this value for smaller screens
+  }
 `;
+
 
 const BottomTextContainer = styled.div`
-font-family: 'Oooh Baby', sans-serif;
-  position: absolute; // Positioning relative to the FullPageContainer
-  bottom: 20px;
-  width: 100%; // Ensure it spans the width of the page
+  font-family: K2D;
   display: flex;
-  justify-content: center; // This centers the BottomText
+  justify-content: center;
   user-select: none;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 10px;
+  }
 `;
 
+
 const BottomText = styled.div`
-  
-  bottom: 20px;    // Distance from the bottom of the screen
-  left: 50%;       // Center horizontally
-  transform: translateX(-50%); // Center align the text block horizontally
-  width: 315px;
-  height: 69px;
-  flex-shrink: 0;
   color: darkgray;
   font-family: K2D;
   font-size: 16px;
   font-style: italic;
   font-weight: 50;
   line-height: normal;
-  margin-left: 1500px;
-  margin-right: 90px;
-  margin-bottom: 50px;
   user-select: none;
+  text-align: center;
+  margin-bottom: 20px; // Adjust this value as needed
 
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
 `;
 
 function FirstSection() {
-    return (
-      <>
-        
-        <MainSection>
-          
-          <FullPageContainer>
-          <Title>A Story of Growth</Title>
-            <SvgContainer>
-            <CenteredSvg xmlns="http://www.w3.org/2000/svg" width="25" height="45" viewBox="0 0 27 47" fill="none">
-            <rect x="0.5" y="0.5" width="26" height="46" rx="13" stroke="white"/>
-            <circle cx="13.5" cy="30.5" r="4.5" fill="#D9D9D9"/>
-            </CenteredSvg>
-            <TextBelowSvg>
-              Scroll  More
-            </TextBelowSvg>
-            </SvgContainer>
-            <BottomTextContainer>
-            <BottomText>
-              "We are here to bridge the communication gap between the blind, deaf, and mute."
-            </BottomText>
-            </BottomTextContainer>
-          </FullPageContainer>
-        </MainSection>
-      </>
-    );
-  }
-  
-  export default FirstSection;
+  return (
+    <>
+      <Header />
+      <MainSection>
+        <FullPageContainer>
+        <Title>A Story of Growth</Title>
+          <SvgContainer>
+          <CenteredSvg xmlns="http://www.w3.org/2000/svg" width="25" height="45" viewBox="0 0 27 47" fill="none">
+          <rect x="0.5" y="0.5" width="26" height="46" rx="13" stroke="white"/>
+          <circle cx="13.5" cy="30.5" r="4.5" fill="#D9D9D9"/>
+          </CenteredSvg>
+          <TextBelowSvg>
+            Scroll  More
+          </TextBelowSvg>
+          </SvgContainer>
+          <BottomTextContainer>
+          <BottomText>
+            "We are here to bridge the communication gap between the blind, deaf, and mute."
+          </BottomText>
+          </BottomTextContainer>
+        </FullPageContainer>
+      </MainSection>
+    </>
+  );
+}
+
+export default FirstSection;
