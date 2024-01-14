@@ -110,6 +110,38 @@ animation: move-bg 8s infinite linear;
 
 `;
 
+const StyleSmallTitle = styled.p`
+  color: darkgray;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  position: absolute;
+  justify-content: center;
+  user-select: none;
+  align-items: center;
+  cursor: pointer;
+  bottom: 40px;
+  
+  a {
+    color: white;
+  }
+
+
+  @media (max-width: 768px) {
+    font-size: 8px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 6px;
+  }
+`;
+
+
+
+
+
+
+
+
 
 function Loader() {
   const navigate = useNavigate();
@@ -123,8 +155,12 @@ function Loader() {
           <StyleH2>Explore</StyleH2>
         </ParentDiv>
       </StyledHoverWrapper>
+      <StyleSmallTitle onClick={() => navigate('/FirstSection')}>  
+  By entering the site, you will able to see the content of the site.
+  For more info check <a href="your_website_url">website</a>.
+</StyleSmallTitle>
     </StyledLoader>
   );
 }
 
-export default Loader;
+export default Loader;  
