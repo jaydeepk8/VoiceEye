@@ -36,8 +36,16 @@ const MainSection = styled.div`
 
   @media (max-width: 768px) {
 
-    font-size: 32px;
-  
+    font-size: 32px; 
+ 
+
+
+
+
+
+    mix-blend-mode: color-dodge; // Add Color Dodge effect
+
+  }
   }
 `;
 
