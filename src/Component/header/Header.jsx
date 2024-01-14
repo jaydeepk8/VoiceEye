@@ -47,15 +47,23 @@ const NavLinks = styled.div`
   }
 `;
 
-const NavLink = styled.div`
-  margin-left: 50px;
-  cursor: pointer;
+const NavLink = styled.a`
+  position: relative;
+  display: inline-block;
+  padding: 10px 20px;
   color: darkgray;
-  font-family: K2D;
-  font-size: 14px;
-  font-weight: 50;
-  user-select: none;
+  text-decoration: none;
+  transition: color 0.3s ease-in-out;
+
+
+
+  &:hover {
+    color: white; // Change this to the color of your choice
+
+ 
+  }
 `;
+
 
 const Hamburger = styled.div`
   display: none;
@@ -108,10 +116,11 @@ function Header() {
         <div />
       </Hamburger>
       <NavLinks open={open}>
-        <NavLink>[Home]</NavLink>
-        <NavLink>[Project]</NavLink>
-        <NavLink>[Goal]</NavLink>
-        <NavLink>[Contact]</NavLink>
+
+      <NavLink href="#">Home</NavLink>
+<NavLink href="#">Project</NavLink>
+<NavLink href="#">Goal</NavLink>
+<NavLink href="#">Contact</NavLink>
       </NavLinks>
     </StyledHeader>
   );

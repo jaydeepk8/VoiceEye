@@ -9,7 +9,7 @@ const StyledPage = styled.div`
 function Hero(props) {
     return (
         <StyledPage>
-            <h1>Je suis page1</h1>
+            <h1>sorry</h1>
         </StyledPage>
     );
 }
