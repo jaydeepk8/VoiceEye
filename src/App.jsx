@@ -7,7 +7,7 @@ import FirstSection from './pages/FirstSection';
 import Default from './pages/Default';
 import SecondSection from './pages/SecondSection';
 import Loader from './Loader';
-// import Cursor from "./Component/Cursor";
+import Cursor from "./Component/Cursor";
 
 
 
@@ -24,8 +24,8 @@ function App() {
           <Route path="/" element={<Loader />} />
    
           <Route path="/FirstSection" element={<FirstSection />} />
-          {/* <Route path="/Default" element={<Default />} /> */}
-          {/* <Route path="/Cursor" element={<Cursor />} /> */}
+          <Route path="/Default" element={<Default />} />
+          <Route path="/Cursor" element={<Cursor />} />
        
 
           <Route path="/SecondSection" element={<SecondSection />} />
