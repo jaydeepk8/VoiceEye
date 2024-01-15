@@ -1,7 +1,29 @@
-import React from "react";
+
 import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
 
 import styled, { keyframes } from "styled-components";
+
+
+
+// New styled component for the custom cursor
+const CustomCursor = styled.div`
+  width: ${props => props.isHovered ? '38px' : '8px'};
+  height: ${props => props.isHovered ? '38px' : '8px'};
+  border-radius: 50%;
+  background: rgba(0, 255, 255, 0.5);
+  position: fixed;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9999;
+  transition: width 0.3s, height 0.3s; // Add transition for smooth resizing
+`;
+// ... rest of your code ...
+
+
+
+
+
 
 const StyledLoader = styled.div`
 // background: linear-gradient(90deg, rgba(8,21,27,1) 0%, rgba(9,29,38,1) 52%, rgba(8,25,33,1) 100%);
@@ -9,7 +31,7 @@ const StyledLoader = styled.div`
 background: black;
 width: 100vw;
 height: 100vh;
-
+cursor: none;
 display: flex;
 justify-content: center;
 align-items: center;
@@ -27,7 +49,7 @@ left: 50%;
 position: absolute;
 align-items: center;
 justify-content: center;
-cursor: pointer;
+
 
 
 `;
@@ -97,7 +119,7 @@ color: transparent;
 background-clip: text;
 animation: move-bg 8s infinite linear;
 &:hover {
-  cursor: pointer;
+ 
 }
 @keyframes move-bg {
   0% {
@@ -119,7 +141,7 @@ const StyleSmallTitle = styled.p`
   justify-content: center;
   user-select: none;
   align-items: center;
-  cursor: pointer;
+
   bottom: 40px;
   
   a {
@@ -146,22 +168,43 @@ const StyleSmallTitle = styled.p`
 
 function Loader() {
   const navigate = useNavigate();
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false); // New state for hover status
+
+  // Update cursor position
+  const updateCursor = (e) => {
+    setCursorPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", updateCursor);
+    return () => window.removeEventListener("mousemove", updateCursor);
+  }, []);
 
   return (
     <StyledLoader>
+      <CustomCursor style={{ left: `${cursorPosition.x}px`, top: `${cursorPosition.y}px` }} isHovered={isHovered} />
       <StyledHoverWrapper>
-        <ParentDiv onClick={() => navigate('/FirstSection')}>
+        <ParentDiv 
+          onClick={() => navigate('/FirstSection')}
+          onMouseEnter={() => setIsHovered(true)} // Set isHovered to true when mouse enters
+          onMouseLeave={() => setIsHovered(false)} // Set isHovered to false when mouse leaves
+        >
           <Circle1 className="circle1" />
           <Circle2 className="circle2" />
           <StyleH2>Explore</StyleH2>
         </ParentDiv>
       </StyledHoverWrapper>
-      <StyleSmallTitle onClick={() => navigate('/FirstSection')}>  
-  By entering the site, you will able to see the content of the site.
-  For more info click on  <a href="your_website_url">Explore</a>.
-</StyleSmallTitle>
+      <StyleSmallTitle 
+        onClick={() => navigate('/FirstSection')}
+        onMouseEnter={() => setIsHovered(true)} // Set isHovered to true when mouse enters
+        onMouseLeave={() => setIsHovered(false)} // Set isHovered to false when mouse leaves
+      >  
+        By entering the site, you will able to see the content of the site.
+        For more info click on  <a href="your_website_url">Explore</a>.
+      </StyleSmallTitle>
     </StyledLoader>
   );
 }
 
-export default Loader;  
+export default Loader;
