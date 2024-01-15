@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from 'react';
 import styled from "styled-components";
 import Header from '../Component/header/Header'; 
+
+
 
 
 const Container = styled.div`
@@ -168,27 +170,35 @@ const BottomText = styled.div`
   }
 `;
 
+
+
+
+
+
 function FirstSection() {
+ 
   return (
     <>
+  
       <Header />
       <MainSection>
         <FullPageContainer>
-        <Title>A Story of Growth</Title>
+          <Title>A Story of Growth</Title>
           <SvgContainer>
-          <CenteredSvg xmlns="http://www.w3.org/2000/svg" width="25" height="45" viewBox="0 0 27 47" fill="none">
-          <rect x="0.5" y="0.5" width="26" height="46" rx="13" stroke="white"/>
-          <circle cx="13.5" cy="30.5" r="4.5" fill="#D9D9D9"/>
-          </CenteredSvg>
-          <TextBelowSvg>
-            Scroll  More
-          </TextBelowSvg>
+            <CenteredSvg xmlns="http://www.w3.org/2000/svg" width="25" height="45" viewBox="0 0 27 47" fill="none">
+              <rect x="0.5" y="0.5" width="26" height="46" rx="13" stroke="white"/>
+              <circle cx="13.5" cy="30.5" r="4.5" fill="#D9D9D9"/>
+            </CenteredSvg>
+            <TextBelowSvg>
+              Scroll  More
+            </TextBelowSvg>
           </SvgContainer>
           <BottomTextContainer>
-          <BottomText>
-            "We are here to bridge the communication gap between the blind, deaf, and mute."
-          </BottomText>
+            <BottomText>
+              "We are here to bridge the communication gap between the blind, deaf, and mute."
+            </BottomText>
           </BottomTextContainer>
+        
         </FullPageContainer>
       </MainSection>
     </>

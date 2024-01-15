@@ -1,17 +1,21 @@
 import React from "react";
 import styled from "styled-components";
+import FirstSection from "./FirstSection";
+import SecondSection from "./SecondSection";
+import Header from '../Component/header/Header'; 
 
-const StyledHome = styled.div`
+const StyledDefault = styled.div`
   
-
 `;
 
-function Home() {
+function Default() {
   return (
-    <StyledHome>
-      
-    </StyledHome>
+    <StyledDefault>
+      <Header /> {/* Corrected here */}
+      <FirstSection />
+      <SecondSection />
+    </StyledDefault>
   );
 }
 
-export default Home;
+export default Default;

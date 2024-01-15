@@ -5,7 +5,8 @@ import styled, { keyframes } from "styled-components";
 
 const StyledLoader = styled.div`
 // background: linear-gradient(90deg, rgba(8,21,27,1) 0%, rgba(9,29,38,1) 52%, rgba(8,25,33,1) 100%);
-background : #0e2225;
+// background : #0e2225;
+background: black;
 width: 100vw;
 height: 100vh;
 
@@ -62,7 +63,7 @@ const Circle2 = styled.div`
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  border: 0.5px solid #C38C5C;
+  border: 0.5px solid aqua;
   position: absolute;
   transform: translate(-50%, -50%);
   transition: width 0.7s, height 0.7s; // Add transition for smooth shrinking
@@ -73,8 +74,8 @@ const Circle2 = styled.div`
 const StyleH2 = styled.h2`
 
 --bg-size: 400%;
---color-one: hsl(40, 47%, 56%); // RGB color converted to HSL
---color-two: hsl(30, 47%, 46%); // Darker shade of the same color
+--color-one: hsl(180, 100%, 50%); // Aqua color
+--color-two: hsl(180, 100%, 50%); // Aqua color
 font-family: 'Orbitron', sans-serif;
 font-size: 14px;
 font-style: normal;
@@ -122,7 +123,7 @@ const StyleSmallTitle = styled.p`
   bottom: 40px;
   
   a {
-    color: white;
+    color: aqua;
   }
 
 
@@ -157,7 +158,7 @@ function Loader() {
       </StyledHoverWrapper>
       <StyleSmallTitle onClick={() => navigate('/FirstSection')}>  
   By entering the site, you will able to see the content of the site.
-  For more info check <a href="your_website_url">website</a>.
+  For more info click on  <a href="your_website_url">Explore</a>.
 </StyleSmallTitle>
     </StyledLoader>
   );
