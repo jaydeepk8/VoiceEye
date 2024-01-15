@@ -1,3 +1,4 @@
+
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Header from './Component/header/Header'; 
@@ -27,6 +28,7 @@ function App() {
         </Routes>
       </CSSTransition>
     </TransitionGroup>
+
   );
 }
 
