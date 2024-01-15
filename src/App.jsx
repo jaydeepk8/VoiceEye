@@ -2,11 +2,13 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Header from './Component/header/Header'; 
+import Footer from './Component/footer/Footer'; 
 import FirstSection from './pages/FirstSection';
 import Default from './pages/Default';
 import SecondSection from './pages/SecondSection';
 import Loader from './Loader';
-import TryNow from './pages/TryNow';
+// import Cursor from "./Component/Cursor";
+
 
 
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
@@ -22,11 +24,12 @@ function App() {
           <Route path="/" element={<Loader />} />
    
           <Route path="/FirstSection" element={<FirstSection />} />
-          <Route path="/Default" element={<Default />} />
+          {/* <Route path="/Default" element={<Default />} /> */}
+          {/* <Route path="/Cursor" element={<Cursor />} /> */}
        
 
           <Route path="/SecondSection" element={<SecondSection />} />
-          <Route path="/TryNow" element={<TryNow />} />
+  
         </Routes>
       </CSSTransition>
     </TransitionGroup>

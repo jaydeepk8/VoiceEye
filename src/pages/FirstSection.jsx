@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import styled from "styled-components";
 import Header from '../Component/header/Header'; 
+import Cursor from "../Component/Cursor";
 
 
 
 
 const Container = styled.div`
   position: relative; // Establish relative positioning context
-
+cursor: none;
   
 `;
 
@@ -179,7 +180,7 @@ function FirstSection() {
  
   return (
     <>
-  
+      <Cursor />
       <Header />
       <MainSection>
         <FullPageContainer>
