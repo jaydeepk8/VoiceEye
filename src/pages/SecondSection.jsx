@@ -58,17 +58,22 @@ const StyledButton1 = styled.button`
   width: 107px;
   height: 42px;
   flex-shrink: 0;
-  stroke-width: 1.5px;
-  stroke: #FFF;
-  margin-left: 325px;
-  margin-top: -50px; // Adjust this value as needed to move the button up
-  background: #2563EB; // Add a background color if needed
-  color: #FFFFFF; // Text color
-  border: none; // No border if you don't need it
+  background: transparent; // Make button background transparent
+  color: #00FFEE; // Text color is #00FFEE by default
+  border: 1.5px solid #00FFEE; // Set border color to #00FFEE
   border-radius: 4px; // Rounded corners if you prefer
   cursor: pointer; // Changes the cursor to signify this is a button
-  // Add any other styles for the button here
+  margin-left: 325px;
+  margin-top: -50px; // Adjust this value as needed to move the button up
+  transition: background-color 0.4s, color 0.4s; // Transition for smooth color change
+
+  &:hover {
+    background-color: #00FFEE; // Background color on hover
+    color: #FFFFFF; // Text color on hover is white
+  }
 `;
+
+
 
 
 
@@ -104,19 +109,23 @@ const StyledButton2 = styled.button`
   width: 107px;
   height: 42px;
   flex-shrink: 0;
-  stroke-width: 1.5px;
-  stroke: #FFF;
-  margin-left:1090px;
+  background: transparent; // Button background is transparent
+  color: #00FFEE; // Text color is #00FFEE by default
+  border: 1.5px solid #00FFEE; // Border color is #00FFEE
+  border-radius: 4px; // Rounded corners
+  cursor: pointer; // Cursor to pointer to indicate it's a button
+  margin-left: 1090px;
   margin-top: -50px; // Adjust this value as needed to move the button up
-  background: #2563EB; // Add a background color if needed
-  color: #FFFFFF; // Text color
-  border: none; // No border if you don't need it
-  border-radius: 4px; // Rounded corners if you prefer
-  cursor: pointer; // Changes the cursor to signify this is a button
-  // Add any other styles for the button here
+  transition: background-color 0.3s, color 0.3s; // Smooth transition for colors
+
+  &:hover {
+    background-color: #00FFEE; // Background color on hover
+    color: #FFFFFF; // Text color on hover
+  }
 `;
 
-function Home() {
+
+function SecondSection() {
   return (
     <MainSection>
 
@@ -133,4 +142,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default SecondSection;
