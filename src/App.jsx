@@ -9,7 +9,7 @@ import Loader from './Loader';
 
 
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
-import Home from "./pages/SecondSection";
+
 
 function App() {
   const location = useLocation();
