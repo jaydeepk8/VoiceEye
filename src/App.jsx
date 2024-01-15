@@ -6,6 +6,7 @@ import FirstSection from './pages/FirstSection';
 import Default from './pages/Default';
 import SecondSection from './pages/SecondSection';
 import Loader from './Loader';
+import TryNow from './pages/TryNow';
 
 
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
@@ -25,6 +26,7 @@ function App() {
        
 
           <Route path="/SecondSection" element={<SecondSection />} />
+          <Route path="/TryNow" element={<TryNow />} />
         </Routes>
       </CSSTransition>
     </TransitionGroup>
