@@ -6,6 +6,7 @@ import styled, { keyframes } from "styled-components";
 
 import Music2 from './Music/Music2.mp3'; // Import the audio file
 import Explore1 from './Music/Explore1.mp3'; // Import the audio file
+// import Explore1 from './Music/ExploreFemale.mp3'; // Import the audio file
 
 
 

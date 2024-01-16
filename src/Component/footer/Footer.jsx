@@ -3,12 +3,13 @@ import * as THREE from 'three';
 import styled from 'styled-components';
 
 const StyledFooter = styled.div`
-width: 1520px;
-height: 770px;
-flex-shrink: 0;
-background: #000;
+  width: 100vw;
+  height: 100vh;
+  display: flex; // Use flexbox
+  justify-content: center; // Center content horizontally
+  align-items: center; // Center content vertically
+  background: #000;
 `;
-
 
 
 // moving globe section
@@ -48,8 +49,10 @@ font-style: normal;
 font-weight: 400;
 line-height: normal;
 margin-left: 180px;
-position: absolute;
-top:50px;
+margin-bottom: 20px;
+position: relative;
+top: -550px;
+left: -100px;
 `;
 
 
@@ -176,9 +179,7 @@ const StyledNavItem = styled.div`
 
 // footer bottom section
 const StyledBottomItems = styled.div`
-width: 464px;
-height: 146px;
-flex-shrink: 0;
+
 color: #FFF;
 font-family: 'Libre Caslon Display', sans-serif;
 font-size: 128px;
@@ -186,7 +187,9 @@ font-style: normal;
 font-weight: 400;
 line-height: normal;
 letter-spacing: 1.28px;
-margin-left:520px;
+margin-top: 800px;
+margin-left:-300px;
+
 `;
 
 
@@ -210,16 +213,35 @@ font-size: 13px;
 font-style: normal;
 font-weight: 500;
 line-height: 20px;
-margin-left:1100px;
+margin-left:100px;
+position: relative;
 
 `;
 
 
+const StyleWrapper = styled.div`
+  width: 100vw;
+  height: 100vh; // Add height to ensure vertical centering
+  display: flex;
+  justify-content: center; // Center children horizontally
+  align-items: center; // Center children vertically
+  text-align: center; // Center text
+  
+`;
+
+
+const GlobeContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center; // Center the children horizontally
+  margin-left: 200px;
+`;
 
 function Footer() {
     return (
       <StyledFooter>
-
+          <StyleWrapper>
+          <GlobeContainer>
         <StyledGlobe>
             <Globe />
             <StyledGlobeText>Open to the world</StyledGlobeText>
@@ -234,6 +256,7 @@ function Footer() {
             </StyledShareSvg>
 
         </StyledGlobe>
+        </GlobeContainer>
 
         <StyledFooterNavsContainer>
           {/* Use StyledNavItem for each item and adjust the top value accordingly */}
@@ -247,7 +270,7 @@ function Footer() {
         <StyledVoiceEyeText>VoiceEye Project</StyledVoiceEyeText>
         <StyledCopyRight> @Copyright2024</StyledCopyRight>
         
-
+        </StyleWrapper>
       </StyledFooter>
     );
   }

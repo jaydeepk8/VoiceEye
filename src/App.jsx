@@ -3,6 +3,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Header from './Component/header/Header'; 
 import Footer from './Component/footer/Footer'; 
+import Footers from './Component/footer/Footers'; 
 import FirstSection from './pages/FirstSection';
 import Default from './pages/Default';
 import SecondSection from './pages/SecondSection';
@@ -20,17 +21,15 @@ function App() {
   return (
     <TransitionGroup>
       <CSSTransition key={location.key} classNames="fade" timeout={200}>
-        <Routes>
-          <Route path="/" element={<Loader />} />
-   
-          <Route path="/FirstSection" element={<FirstSection />} />
-          <Route path="/Default" element={<Default />} />
-          <Route path="/Cursor" element={<Cursor />} />
-       
-
-          <Route path="/SecondSection" element={<SecondSection />} />
-  
-        </Routes>
+      <Routes>
+  <Route path="/" element={<Loader />} />
+  <Route path="/FirstSection" element={<FirstSection />} />
+  <Route path="/Default" element={<Default />} />
+  <Route path="/Cursor" element={<Cursor />} />
+  <Route path="/SecondSection" element={<SecondSection />} />
+  <Route path="/Footer" element={<Footer />} />
+  <Route path="/Footers" element={<Footers />} />
+</Routes>
       </CSSTransition>
     </TransitionGroup>
 

@@ -20,6 +20,7 @@ const MainSection = styled.div`
   height: 100vh; // Full viewport height
   position: relative;
   z-index: 1;
+  cursor: none;
 
   &::before {
     content: "";
