@@ -7,6 +7,7 @@ import Footers from './Component/footer/Footers';
 import FirstSection from './pages/FirstSection';
 import Default from './pages/Default';
 import SecondSection from './pages/SecondSection';
+import ThirdSection from './pages/ThirdSection';
 import Loader from './Loader';
 import Cursor from "./Component/Cursor";
 
@@ -27,6 +28,7 @@ function App() {
   <Route path="/Default" element={<Default />} />
   <Route path="/Cursor" element={<Cursor />} />
   <Route path="/SecondSection" element={<SecondSection />} />
+  <Route path="/ThirdSection" element={<ThirdSection />} />
   <Route path="/Footer" element={<Footer />} />
   <Route path="/Footers" element={<Footers />} />
 </Routes>
