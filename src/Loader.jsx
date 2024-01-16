@@ -208,10 +208,7 @@ const exploreAudioRef = useRef(null);
     navigate('/FirstSection');
   }}
   onMouseEnter={() => {
-    if (!hasExploreAudioPlayed) {
-      exploreAudioRef.current.play();
-      setHasExploreAudioPlayed(true);
-    }
+    exploreAudioRef.current.play();
     setIsHovered(true); // Set isHovered to true when mouse enters
   }}
   onMouseLeave={() => setIsHovered(false)} // Set isHovered to false when mouse leaves
