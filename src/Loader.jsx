@@ -5,6 +5,7 @@ import React, { useEffect, useState, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 
 import Music2 from './Music/Music2.mp3'; // Import the audio file
+import Explore1 from './Music/Explore1.mp3'; // Import the audio file
 
 
 
@@ -182,6 +183,8 @@ function Loader() {
   
   const [hasAudioPlayed, setHasAudioPlayed] = useState(false);
 const audioRef = useRef(null);
+const [hasExploreAudioPlayed, setHasExploreAudioPlayed] = useState(false);
+const exploreAudioRef = useRef(null);
 
   return (
 <StyledLoader
@@ -195,17 +198,28 @@ const audioRef = useRef(null);
  <audio ref={audioRef}>
   <source src={Music2} type="audio/mpeg" />
 </audio>
+<audio ref={exploreAudioRef}>
+  <source src={Explore1} type="audio/mpeg" />
+</audio>
       <CustomCursor style={{ left: `${cursorPosition.x}px`, top: `${cursorPosition.y}px` }} isHovered={isHovered} />
       <StyledHoverWrapper>
-        <ParentDiv 
-          onClick={() => navigate('/FirstSection')}
-          onMouseEnter={() => setIsHovered(true)} // Set isHovered to true when mouse enters
-          onMouseLeave={() => setIsHovered(false)} // Set isHovered to false when mouse leaves
-        >
-          <Circle1 className="circle1" />
-          <Circle2 className="circle2" />
-          <StyleH2>Explore</StyleH2>
-        </ParentDiv>
+      <ParentDiv 
+  onClick={() => {
+    navigate('/FirstSection');
+  }}
+  onMouseEnter={() => {
+    if (!hasExploreAudioPlayed) {
+      exploreAudioRef.current.play();
+      setHasExploreAudioPlayed(true);
+    }
+    setIsHovered(true); // Set isHovered to true when mouse enters
+  }}
+  onMouseLeave={() => setIsHovered(false)} // Set isHovered to false when mouse leaves
+>
+  <Circle1 className="circle1" />
+  <Circle2 className="circle2" />
+  <StyleH2>Explore</StyleH2>
+</ParentDiv>
       </StyledHoverWrapper>
       <StyleSmallTitle 
         onClick={() => navigate('/FirstSection')}
