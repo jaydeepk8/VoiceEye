@@ -1,8 +1,10 @@
 
 import { useNavigate } from 'react-router-dom';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 import styled, { keyframes } from "styled-components";
+
+import Music2 from './Music/Music2.mp3'; // Import the audio file
 
 
 
@@ -163,9 +165,6 @@ const StyleSmallTitle = styled.p`
 
 
 
-
-
-
 function Loader() {
   const navigate = useNavigate();
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
@@ -180,9 +179,22 @@ function Loader() {
     window.addEventListener("mousemove", updateCursor);
     return () => window.removeEventListener("mousemove", updateCursor);
   }, []);
+  
+  const [hasAudioPlayed, setHasAudioPlayed] = useState(false);
+const audioRef = useRef(null);
 
   return (
-    <StyledLoader>
+<StyledLoader
+  onClick={() => {
+    if (!hasAudioPlayed) {
+      audioRef.current.play();
+      setHasAudioPlayed(true);
+    }
+  }}
+>
+ <audio ref={audioRef}>
+  <source src={Music2} type="audio/mpeg" />
+</audio>
       <CustomCursor style={{ left: `${cursorPosition.x}px`, top: `${cursorPosition.y}px` }} isHovered={isHovered} />
       <StyledHoverWrapper>
         <ParentDiv 
