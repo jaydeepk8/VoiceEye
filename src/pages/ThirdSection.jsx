@@ -11,6 +11,8 @@ const fadeIn = keyframes`
   100% { opacity: 1; transform: translateY(0); }
 `;
 
+
+
 const MainSection = styled.div`
   width: 100vw;
   height: 100vh;
@@ -21,8 +23,11 @@ const MainSection = styled.div`
   justify-content: center;
   align-items: center;
   position: relative;
-`;
 
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
 const MovingTextContainer = styled.div`
   position: absolute;
   top: 0%;
@@ -47,7 +52,7 @@ const GrayWrap = styled.div`
 
   height: 75vh;
   width: 90vw;
-  background-color: #B5B5B5;
+  background: linear-gradient(132deg, #819CFD 1.06%, #FFA0F6 98.9%);
   
   border-radius: 50px;
   display: flex;
@@ -59,26 +64,83 @@ const GrayWrap = styled.div`
 const ScrollContent = styled.div`
   width: 80vw;
   position: absolute;
-  top: 5%;
   height: 80vh;
   display: flex;
   justify-content: center;
   align-items: center;
   opacity: 0;
   animation: ${fadeIn} 1s forwards;
-`;
 
+  @media (max-width: 768px) {
+    flex-direction: column;
+    height: auto;
+    width: auto;
+  }
+`;
 const ImageContainer = styled.div`
   flex: 1;
   display: flex;
   justify-content: center;
+
+  @media (max-width: 768px) {
+    margin-top: -80px;
+    max-width: 90%; // or whatever size you want
+    padding: 25px 25px 20px 30px;
+   
+  }
 `;
 
 const TextContainer = styled.div`
   flex: 1;
   display: flex;
   justify-content: center;
+  padding: 0 50px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 25px 25px 50px 50px; 
+  }
 `;
+
+
+const Image = styled.img`
+  max-width: 100%;
+  
+  height: auto;
+  /* Add your styles here */
+`;
+
+const Text = styled.p`
+  font-size: 16px;
+  color: black;
+  /* Add your styles here */
+
+
+font-family: K2D;
+font-size: 32px;
+font-style: italic;
+font-weight: 400;
+line-height: normal;
+letter-spacing: 0.64px;
+
+
+@media (max-width: 768px) {
+
+  font-family: K2D;
+  font-size: 26px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0.64px;
+  
+
+}
+`;
+
+
+
+
+
 
 function ThirdSection() {
   const [activeSection, setActiveSection] = useState(0);
@@ -133,11 +195,11 @@ function ThirdSection() {
           >
             {activeSection === index && (
               <>
-                <ImageContainer>
-                  <img src={section.imageUrl} alt="Section" />
+              <ImageContainer>
+                  <Image src={section.imageUrl} alt="Section" />
                 </ImageContainer>
                 <TextContainer>
-                  <p>{section.text}</p>
+                  <Text>{section.text}</Text>
                 </TextContainer>
               </>
             )}
