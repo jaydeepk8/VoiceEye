@@ -250,13 +250,15 @@ const BottomCenterDiv = styled.div`
   color: #FFF;
   color: #FFF;
 
-  font-family: Libre Caslon Display;
+  // font-family: Libre Caslon Display;
+  // font-family: Orbitron;
+  font-family: 'Black Ops One', system-ui;
   font-size: 110px;
   font-style: normal;
   font-weight: 400;
   line-height: normal;
   letter-spacing: 1.28px;
-  font-style: italic;
+  // font-style: italic;
 `;
 
 const BottomRightDiv = styled.div`
