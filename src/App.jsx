@@ -8,22 +8,24 @@ import FirstSection from './pages/FirstSection';
 import Default from './pages/Default';
 import SecondSection from './pages/SecondSection';
 import ThirdSection from './pages/ThirdSection';
-import Loader from './Loader';
+
 import Cursor from "./Component/Cursor";
+import Home from './Home';
+import Loader from './Loader';
 
 
 
-import { TransitionGroup, CSSTransition } from 'react-transition-group';
+
 
 
 function App() {
   const location = useLocation();
 
   return (
-    <TransitionGroup>
-      <CSSTransition key={location.key} classNames="fade" timeout={200}>
+
       <Routes>
   <Route path="/" element={<Loader />} />
+  <Route path="/" element={<Home />} />
   <Route path="/FirstSection" element={<FirstSection />} />
   <Route path="/Default" element={<Default />} />
   <Route path="/Cursor" element={<Cursor />} />
@@ -31,9 +33,10 @@ function App() {
   <Route path="/ThirdSection" element={<ThirdSection />} />
   <Route path="/Footer" element={<Footer />} />
   <Route path="/Footers" element={<Footers />} />
+
+  
 </Routes>
-      </CSSTransition>
-    </TransitionGroup>
+   
 
   );
 }
