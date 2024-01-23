@@ -2,22 +2,20 @@ import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import styled from 'styled-components';
 
-
 // globe lines
 const Mat = () => {
     return new THREE.MeshBasicMaterial({
       color: 0xffffff,
       wireframe: true, // Make sure wireframe is true
       transparent: true,
-      opacity: 0.5 // Adjust opacity to make it more or less transparent
+      opacity: 1.0 // Keep the globe fully visible
     });
 };
 
 const StyleGlobe = styled.div`
   width: 614px;
   height: 463px;
- padding-left: 50px;
-
+  padding-left: 50px;
 `;
 
 // rotating globe
@@ -28,7 +26,8 @@ const Globe = () => {
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, globeRef.current.clientWidth / globeRef.current.clientHeight, 0.1, 1000);
 
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({ alpha: true }); // Set alpha to true
+        renderer.setClearColor(0x000000, 0); // Set clear color to black and fully transparent
         renderer.setSize(globeRef.current.clientWidth, globeRef.current.clientHeight);
         globeRef.current.appendChild(renderer.domElement); // Attach the renderer to the DOM
 
@@ -67,6 +66,5 @@ const Globe = () => {
 
     return <StyleGlobe ref={globeRef} />;
 };
-
 
 export default Globe;

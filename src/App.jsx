@@ -2,7 +2,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Header from './Component/header/Header'; 
-import Footer from './Component/footer/Footer'; 
+
 import Footers from './Component/footer/Footers'; 
 import FirstSection from './pages/FirstSection';
 import Default from './pages/Default';
@@ -31,7 +31,7 @@ function App() {
   <Route path="/Cursor" element={<Cursor />} />
   <Route path="/SecondSection" element={<SecondSection />} />
   <Route path="/ThirdSection" element={<ThirdSection />} />
-  <Route path="/Footer" element={<Footer />} />
+
   <Route path="/Footers" element={<Footers />} />
 
   
