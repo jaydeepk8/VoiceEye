@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import Globe from './Globe';
-
+import Shaders from './Shaders';
 
 
 
@@ -16,8 +16,9 @@ height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: black;
+  background-color: orange;
   color: white;
+  position: fixed;
   cursor: none;
 
 `;
@@ -326,15 +327,20 @@ function Footers() {
     };
   }, []);
 
+
+  
+
     return (
 
       <StyledFooters>
+       <Shaders /> 
+   
           <Circle1 ref={circle1Ref} />
       <Circle2 ref={circle2Ref} />
         <LeftDiv>
           <StyledGlobeText>Open to the world</StyledGlobeText>
           <StyleGlobe>
-            <Globe />
+            <Globe /> 
           </StyleGlobe>
           <StyleGlobeBelow>
             <EmailText>Email</EmailText>
