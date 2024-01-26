@@ -5,9 +5,6 @@ import Shaders from './Shaders';
 
 
 
-
-
-
     // left side
 
 const StyledFooters = styled.div`
@@ -16,10 +13,9 @@ height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: orange;
+  background-color: black;
   color: white;
-  position: fixed;
-  cursor: none;
+  position: relative;
 
 `;
 
@@ -306,37 +302,16 @@ const Circle2 = styled(Circle)`
 
 
 
-function Footers() {
-
-  const circle1Ref = useRef();
-  const circle2Ref = useRef();
-
-  useEffect(() => {
-    const moveCursor = (e) => {
-      const { clientX: x, clientY: y } = e;
-      circle1Ref.current.style.left = `${x}px`;
-      circle1Ref.current.style.top = `${y}px`;
-      circle2Ref.current.style.left = `${x}px`;
-      circle2Ref.current.style.top = `${y}px`;
-    };
-
-    window.addEventListener("mousemove", moveCursor);
-
-    return () => {
-      window.removeEventListener("mousemove", moveCursor);
-    };
-  }, []);
 
 
-  
+  function Footers() {
 
     return (
 
       <StyledFooters>
        <Shaders /> 
    
-          <Circle1 ref={circle1Ref} />
-      <Circle2 ref={circle2Ref} />
+    
         <LeftDiv>
           <StyledGlobeText>Open to the world</StyledGlobeText>
           <StyleGlobe>
@@ -360,6 +335,7 @@ function Footers() {
           <BottomCenterDiv>VoiceEye</BottomCenterDiv>
           <BottomRightDiv>@Copyright 2024</BottomRightDiv>
         </BottomDiv>
+       
       </StyledFooters>
     );
   }
