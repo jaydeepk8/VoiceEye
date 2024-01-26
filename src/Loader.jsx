@@ -206,7 +206,7 @@ const exploreAudioRef = useRef(null);
       <StyledHoverWrapper>
       <ParentDiv 
   onClick={() => {
-    navigate('/FirstSection');
+    navigate('/Home');
   }}
   onMouseEnter={() => {
     exploreAudioRef.current.play();

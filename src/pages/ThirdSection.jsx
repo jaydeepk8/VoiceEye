@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import styled, { keyframes } from "styled-components";
 
 const scroll = keyframes`
@@ -144,6 +144,7 @@ letter-spacing: 0.64px;
 
 function ThirdSection() {
   const [activeSection, setActiveSection] = useState(0);
+  const sectionRef = useRef(null);
   const sectionsData = [
     {
       id: 1,
@@ -161,18 +162,20 @@ function ThirdSection() {
       text: '“We believe that everyone should have the opportunity to communicate and connect with others, regardless of their disability. We are working to create a world where everyone has a voice.”',
     },
   ];
-
   useEffect(() => {
     const handleWheel = (event) => {
-      if (event.deltaY > 0 && activeSection < sectionsData.length - 1) {
-        setActiveSection(activeSection + 1);
-      } else if (event.deltaY < 0 && activeSection > 0) {
-        setActiveSection(activeSection - 1);
+      const bounding = sectionRef.current.getBoundingClientRect();
+      if (bounding.top >= 0 && bounding.bottom <= window.innerHeight) {
+        if (event.deltaY > 0 && activeSection < sectionsData.length - 1) {
+          setActiveSection(activeSection + 1);
+        } else if (event.deltaY < 0 && activeSection > 0) {
+          setActiveSection(activeSection - 1);
+        }
       }
     };
-
+  
     window.addEventListener("wheel", handleWheel);
-
+  
     return () => {
       window.removeEventListener("wheel", handleWheel);
     };
@@ -183,7 +186,7 @@ function ThirdSection() {
     <span key={index} style={{ marginRight: '45px' }}>{text}</span>
   ));
   return (
-    <MainSection>
+    <MainSection ref={sectionRef}>
       <MovingTextContainer>
         <MovingText>{repeatedText}</MovingText>
       </MovingTextContainer>
@@ -192,6 +195,7 @@ function ThirdSection() {
           <ScrollContent
             key={`${section.id}-${activeSection}`}
             data-id={index}
+            style={{ position: activeSection === index ? 'relative' : 'absolute' }} // Add this line
           >
             {activeSection === index && (
               <>

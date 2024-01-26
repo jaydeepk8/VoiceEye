@@ -25,7 +25,7 @@ function App() {
 
       <Routes>
   <Route path="/" element={<Loader />} />
-  <Route path="/" element={<Home />} />
+  <Route path="/Home" element={<Home />} />
   <Route path="/FirstSection" element={<FirstSection />} />
   <Route path="/Default" element={<Default />} />
   <Route path="/Cursor" element={<Cursor />} />

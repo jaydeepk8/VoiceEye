@@ -4,7 +4,7 @@ import styled from "styled-components";
 const StyledDefault = styled.div`
 
   position: relative;
-  z-index: 1000;
+  // z-index: 1000;
   cursor: none;
 `;
 
