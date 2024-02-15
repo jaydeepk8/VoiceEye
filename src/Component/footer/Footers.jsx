@@ -1,22 +1,19 @@
-import React, { useRef, useEffect } from 'react';
-import styled from 'styled-components';
-import Globe from './Globe';
-import Shaders from './Shaders';
+import React, { useRef, useEffect } from "react";
+import styled from "styled-components";
+import Globe from "./Globe";
+import Shaders from "./Shaders";
 
-
-
-    // left side
+// left side
 
 const StyledFooters = styled.div`
-width: 100vw;
-height: 100vh;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: black;
   color: white;
   position: relative;
-
 `;
 
 const LeftDiv = styled.div`
@@ -29,44 +26,30 @@ const LeftDiv = styled.div`
 
   display: flex;
   flex-direction: column;
-//   justify-content: center; // Center children vertically in the column
+  //   justify-content: center; // Center children vertically in the column
   align-items: center; // Center children horizontally
 
   border-bottom: 1px solid gray;
-    border-top: 1px solid gray;
-    border-left: 1px solid gray;
-
-
+  border-top: 1px solid gray;
+  border-left: 1px solid gray;
 `;
-
-
-
-
-
 
 const StyledGlobeText = styled.text`
-
-margin-top: 70px;
-color: #FFF;
-font-family: Orbitron;
-font-size: 36px;
-font-style: normal;
-font-weight: 400;
-line-height: normal;
-z-index: 2;
+  margin-top: 70px;
+  color: #fff;
+  font-family: Orbitron;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  z-index: 2;
 `;
-
-
 
 const StyleGlobe = styled.div`
   width: 714px;
   height: 563px;
   margin-top: -50px;
-
-
-
 `;
-
 
 const StyleGlobeBelow = styled.div`
   margin-top: -130px;
@@ -75,7 +58,7 @@ const StyleGlobeBelow = styled.div`
 `;
 
 const EmailText = styled.p`
-  color: #FFF;
+  color: #fff;
   font-family: Orbitron;
   font-size: 16px;
   font-style: normal;
@@ -91,17 +74,9 @@ const StyledInput = styled.input`
   color: gray;
   text-align: center;
   outline: none;
-
 `;
 
-
-
-
 // right side
-
-
-
-
 
 const RightDiv = styled.div`
   position: absolute;
@@ -116,8 +91,6 @@ const RightDiv = styled.div`
   border-right: 1px solid gray;
   border-top: 1px solid gray;
   border-left: 1px solid gray;
-
-
 `;
 const ChildDiv1 = styled.div`
   flex-grow: 1;
@@ -126,8 +99,8 @@ const ChildDiv1 = styled.div`
   align-items: center;
   border-bottom: 1px solid gray;
   width: 100%;
-  color: #FFF;
-  font-family: 'Orbitron', sans-serif;
+  color: #fff;
+  font-family: "Orbitron", sans-serif;
   font-size: 36px;
   font-style: normal;
   font-weight: 400;
@@ -136,11 +109,8 @@ const ChildDiv1 = styled.div`
     background-color: white;
     color: black;
     transition: 0.9s;
-   }
-  
-
+  }
 `;
-
 
 const ChildDiv2 = styled.div`
   flex-grow: 1;
@@ -149,18 +119,17 @@ const ChildDiv2 = styled.div`
   align-items: center;
   border-bottom: 1px solid gray;
   width: 100%;
-  color: #FFF;
-  font-family: 'Orbitron', sans-serif;
+  color: #fff;
+  font-family: "Orbitron", sans-serif;
   font-size: 36px;
   font-style: normal;
   font-weight: 400;
   line-height: normal;
   &:hover {
-    background-color: #76BEB9;
+    background-color: #76beb9;
     color: black;
     transition: 0.9s;
-   }
-  
+  }
 `;
 
 const ChildDiv3 = styled.div`
@@ -170,8 +139,8 @@ const ChildDiv3 = styled.div`
   align-items: center;
   border-bottom: 1px solid gray;
   width: 100%;
-  color: #FFF;
-  font-family: 'Orbitron', sans-serif;
+  color: #fff;
+  font-family: "Orbitron", sans-serif;
   font-size: 36px;
   font-style: normal;
   font-weight: 400;
@@ -180,8 +149,7 @@ const ChildDiv3 = styled.div`
     background-color: white;
     color: black;
     transition: 0.9s;
-   }
-  
+  }
 `;
 
 const ChildDiv4 = styled.div`
@@ -191,8 +159,8 @@ const ChildDiv4 = styled.div`
   align-items: center;
   border-bottom: 1px solid gray;
   width: 100%;
-  color: #FFF;
-  font-family: 'Orbitron', sans-serif;
+  color: #fff;
+  font-family: "Orbitron", sans-serif;
   font-size: 36px;
   font-style: normal;
   font-weight: 400;
@@ -201,17 +169,10 @@ const ChildDiv4 = styled.div`
     background-color: white;
     color: black;
     transition: 0.9s;
-   }
-  
+  }
 `;
 
-
-
-
 // bottom side
-
-
-
 
 const BottomDiv = styled.div`
   position: absolute;
@@ -229,27 +190,26 @@ const BottomDiv = styled.div`
 `;
 
 const BottomLeftDiv = styled.div`
-//   background-color: red;
-color: gray;
-margin-bottom: 20px;
-margin-left: 20px;
-font-family: Orbitron;
-font-size: 13px;
-font-style: normal;
-font-weight: 500;
-line-height: 20px; /* 153.846% */
-
+  //   background-color: red;
+  color: gray;
+  margin-bottom: 20px;
+  margin-left: 20px;
+  font-family: Orbitron;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px; /* 153.846% */
 `;
 
 const BottomCenterDiv = styled.div`
-//   background-color: blue;
+  //   background-color: blue;
   align-self: center;
-  color: #FFF;
-  color: #FFF;
+  color: #fff;
+  color: #fff;
 
   // font-family: Libre Caslon Display;
   // font-family: Orbitron;
-  font-family: 'Black Ops One', system-ui;
+  font-family: "Black Ops One", system-ui;
   font-size: 110px;
   font-style: normal;
   font-weight: 400;
@@ -259,18 +219,17 @@ const BottomCenterDiv = styled.div`
 `;
 
 const BottomRightDiv = styled.div`
-//   background-color: yellow;
-margin-right: 20px;
-color: gray;
-margin-bottom: 20px;
-margin-left: 20px;
-font-family: Orbitron;
-font-size: 13px;
-font-style: normal;
-font-weight: 500;
-line-height: 20px; /* 153.846% */
+  //   background-color: yellow;
+  margin-right: 20px;
+  color: gray;
+  margin-bottom: 20px;
+  margin-left: 20px;
+  font-family: Orbitron;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px; /* 153.846% */
 `;
-
 
 const Circle = styled.div`
   position: absolute;
@@ -279,7 +238,6 @@ const Circle = styled.div`
   z-index: 1000;
   // transition: left 0.1s ease-out, top 0.1s ease-out;
 `;
-
 
 const Circle1 = styled(Circle)`
   width: 7px;
@@ -299,45 +257,38 @@ const Circle2 = styled(Circle)`
   transform: translate(-50%, -50%);
 `;
 
-
-
-
-
-
-  function Footers() {
-
-    return (
-
+function Footers() {
+  return (
+    <footer>
       <StyledFooters>
-       <Shaders /> 
-   
-    
+        <Shaders />
+
         <LeftDiv>
           <StyledGlobeText>Open to the world</StyledGlobeText>
           <StyleGlobe>
-            <Globe /> 
+            <Globe />
           </StyleGlobe>
           <StyleGlobeBelow>
             <EmailText>Email</EmailText>
             <StyledInput type="text" />
           </StyleGlobeBelow>
         </LeftDiv>
-  
+
         <RightDiv>
           <ChildDiv1>About</ChildDiv1>
           <ChildDiv2>Project</ChildDiv2>
           <ChildDiv3>Goal</ChildDiv3>
           <ChildDiv4>Contact</ChildDiv4>
         </RightDiv>
-  
+
         <BottomDiv>
           <BottomLeftDiv>Voice Eye Project</BottomLeftDiv>
           <BottomCenterDiv>VoiceEye</BottomCenterDiv>
           <BottomRightDiv>@Copyright 2024</BottomRightDiv>
         </BottomDiv>
-       
       </StyledFooters>
-    );
-  }
-  
-  export default Footers;
+    </footer>
+  );
+}
+
+export default Footers;
