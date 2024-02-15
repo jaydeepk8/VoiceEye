@@ -10,7 +10,7 @@ const StyledHeader = styled.div`
   width: 100%;
   top: 0;
   z-index: 10;
-  margin-top:40px;
+  margin-top: 40px;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -18,8 +18,8 @@ const StyledHeader = styled.div`
 `;
 
 const Logo = styled.div`
-  color: #FFFFFF;
-  font-family: 'Libre Caslon Display', sans-serif;
+  color: #ffffff;
+  font-family: "Libre Caslon Display", sans-serif;
   font-size: 48px;
   font-weight: 400;
   line-height: normal;
@@ -28,7 +28,6 @@ const Logo = styled.div`
   @media (max-width: 768px) {
     margin-left: 20px;
     font-size: 32px;
-  
   }
 `;
 
@@ -40,7 +39,7 @@ const NavLinks = styled.div`
   margin-right: 90px;
 
   @media (max-width: 768px) {
-    display: ${props => (props.open ? 'flex' : 'none')};
+    display: ${(props) => (props.open ? "flex" : "none")};
     flex-direction: column;
     width: 100%;
     margin: 0;
@@ -55,15 +54,28 @@ const NavLink = styled.a`
   text-decoration: none;
   transition: color 0.3s ease-in-out;
 
-
+  &::after {
+    content: "";
+    position: absolute;
+    width: 100%; // Change this line
+    transform: scaleX(0);
+    height: 1px;
+    bottom: 0;
+    left: 0;
+    background-color: white;
+    transform-origin: bottom right;
+    transition: transform 0.25s ease-out;
+  }
 
   &:hover {
-    color: white; // Change this to the color of your choice
+    color: white;
 
- 
+    &::after {
+      transform: scaleX(1);
+      transform-origin: bottom left;
+    }
   }
 `;
-
 
 const Hamburger = styled.div`
   display: none;
@@ -86,21 +98,20 @@ const Hamburger = styled.div`
     transition: opacity 0.3s, transform 0.3s;
 
     :first-child {
-      transform: ${({ open }) => (open ? 'rotate(45deg)' : 'rotate(0)')};
+      transform: ${({ open }) => (open ? "rotate(45deg)" : "rotate(0)")};
     }
 
     :nth-child(2) {
-      opacity: ${({ open }) => (open ? '0' : '1')};
+      opacity: ${({ open }) => (open ? "0" : "1")};
     }
 
     :nth-child(3) {
-      transform: ${({ open }) => (open ? 'rotate(-45deg)' : 'rotate(0)')};
+      transform: ${({ open }) => (open ? "rotate(-45deg)" : "rotate(0)")};
     }
   }
 
   @media (max-width: 768px) {
     display: flex;
-
   }
 `;
 
@@ -116,11 +127,10 @@ function Header() {
         <div />
       </Hamburger>
       <NavLinks open={open}>
-
-      <NavLink href="#">Home</NavLink>
-<NavLink href="#">Project</NavLink>
-<NavLink href="#">Goal</NavLink>
-<NavLink href="#">Contact</NavLink>
+        <NavLink href="#">Home</NavLink>
+        <NavLink href="#">Project</NavLink>
+        <NavLink href="#">ISL to Voice</NavLink>
+        <NavLink href="#">Voice to ISL</NavLink>
       </NavLinks>
     </StyledHeader>
   );

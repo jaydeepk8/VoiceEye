@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 
 const scroll = keyframes`
@@ -11,13 +11,11 @@ const fadeIn = keyframes`
   100% { opacity: 1; transform: translateY(0); }
 `;
 
-
-
 const MainSection = styled.div`
   width: 100vw;
   height: 100vh;
   flex-shrink: 0;
-  background: #FFF;
+  background: #fff;
   overflow: hidden;
   display: flex;
   justify-content: center;
@@ -52,13 +50,12 @@ const GrayWrap = styled.div`
 
   height: 75vh;
   width: 90vw;
-  background: linear-gradient(132deg, #819CFD 1.06%, #FFA0F6 98.9%);
-  
+  background: linear-gradient(132deg, #819cfd 1.06%, #ffa0f6 98.9%);
+
   border-radius: 50px;
   display: flex;
   justify-content: center;
   align-items: center;
-
 `;
 
 const ScrollContent = styled.div`
@@ -86,7 +83,6 @@ const ImageContainer = styled.div`
     margin-top: -80px;
     max-width: 90%; // or whatever size you want
     padding: 25px 25px 20px 30px;
-   
   }
 `;
 
@@ -98,14 +94,13 @@ const TextContainer = styled.div`
 
   @media (max-width: 768px) {
     width: 100%;
-    padding: 25px 25px 50px 50px; 
+    padding: 25px 25px 50px 50px;
   }
 `;
 
-
 const Image = styled.img`
   max-width: 100%;
-  
+
   height: auto;
   /* Add your styles here */
 `;
@@ -115,51 +110,42 @@ const Text = styled.p`
   color: black;
   /* Add your styles here */
 
-
-font-family: K2D;
-font-size: 32px;
-font-style: italic;
-font-weight: 400;
-line-height: normal;
-letter-spacing: 0.64px;
-
-
-@media (max-width: 768px) {
-
   font-family: K2D;
-  font-size: 26px;
+  font-size: 32px;
   font-style: italic;
   font-weight: 400;
   line-height: normal;
   letter-spacing: 0.64px;
-  
 
-}
+  @media (max-width: 768px) {
+    font-family: K2D;
+    font-size: 26px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: normal;
+    letter-spacing: 0.64px;
+  }
 `;
-
-
-
-
-
 
 function ThirdSection() {
   const [activeSection, setActiveSection] = useState(0);
   const sectionRef = useRef(null);
+  console.log("activeSection", activeSection);
   const sectionsData = [
     {
       id: 1,
-      imageUrl: '/assets/images/t1.png',
-      text: 'We are here to make it possible for blind, deaf, and mute people to communicate with each other and with the rest of the world. ',
+      imageUrl: "/assets/images/t1.png",
+      text: "We are here to make it possible for blind, deaf, and mute people to communicate with each other and with the rest of the world. ",
     },
     {
       id: 2,
-      imageUrl: '/assets/images/t2.png',
-      text: 'We are developing technologies and solutions that will help them to overcome the communication barriers that they face. ',
+      imageUrl: "/assets/images/t2.png",
+      text: "We are developing technologies and solutions that will help them to overcome the communication barriers that they face. ",
     },
     {
       id: 3,
-      imageUrl: '/assets/images/t3.png',
-      text: '“We believe that everyone should have the opportunity to communicate and connect with others, regardless of their disability. We are working to create a world where everyone has a voice.”',
+      imageUrl: "/assets/images/t3.png",
+      text: "“We believe that everyone should have the opportunity to communicate and connect with others, regardless of their disability. We are working to create a world where everyone has a voice.”",
     },
   ];
   useEffect(() => {
@@ -173,9 +159,9 @@ function ThirdSection() {
         }
       }
     };
-  
+
     window.addEventListener("wheel", handleWheel);
-  
+
     return () => {
       window.removeEventListener("wheel", handleWheel);
     };
@@ -183,7 +169,9 @@ function ThirdSection() {
 
   const text = "What is VoiceEye ";
   const repeatedText = new Array(1000).fill(null).map((_, index) => (
-    <span key={index} style={{ marginRight: '45px' }}>{text}</span>
+    <span key={index} style={{ marginRight: "45px" }}>
+      {text}
+    </span>
   ));
   return (
     <MainSection ref={sectionRef}>
@@ -195,11 +183,13 @@ function ThirdSection() {
           <ScrollContent
             key={`${section.id}-${activeSection}`}
             data-id={index}
-            style={{ position: activeSection === index ? 'relative' : 'absolute' }} // Add this line
+            style={{
+              position: activeSection === index ? "relative" : "absolute",
+            }} // Add this line
           >
             {activeSection === index && (
               <>
-              <ImageContainer>
+                <ImageContainer>
                   <Image src={section.imageUrl} alt="Section" />
                 </ImageContainer>
                 <TextContainer>
