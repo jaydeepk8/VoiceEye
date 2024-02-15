@@ -7,12 +7,12 @@ const Container = styled.div`
 `;
 
 const MainSection = styled.div`
-  background-color: #040D11;
+  background-color: #040d11;
   width: 100vw; // Full viewport width
   height: 100vh; // Full viewport height
   position: relative;
   z-index: 1;
- 
+
   &::before {
     content: "";
     position: absolute;
@@ -20,27 +20,19 @@ const MainSection = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: url('/assets/images/FirstSectionImg.png');
-    
+    background-image: url("/assets/images/FirstSectionImg.png");
+
     background-size: contain;
     background-repeat: no-repeat;
-    opacity: 0.80; // Adjust the opacity as needed
+    opacity: 0.8; // Adjust the opacity as needed
     mix-blend-mode: color-dodge; // Add Color Dodge effect
     z-index: -1;
   }
 
   @media (max-width: 768px) {
-
-    font-size: 32px; 
- 
-
-
-
-
+    font-size: 32px;
 
     mix-blend-mode: color-dodge; // Add Color Dodge effect
-
-  }
   }
 `;
 

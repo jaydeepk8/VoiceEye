@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-
-import styled from "styled-components";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
+import styled, { css, keyframes } from "styled-components";
 import Header from "../Component/header/Header";
 
 const StyledDeaf = styled.div`
@@ -51,67 +53,107 @@ const Input = styled.input`
     outline: none;
   }
 `;
-const Icon = styled.svg`
-  path {
-    stroke: ${({ hover }) => (hover ? "white" : "gray")};
+
+const brighten = keyframes`
+  0% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
   }
 `;
 
+const Button = styled.button`
+  background-color: ${({ isListening }) => (isListening ? "yellow" : "black")};
+  color: ${({ isListening }) => (isListening ? "black" : "white")};
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  margin-left: 10px;
+
+  svg {
+    fill: currentColor;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover svg {
+    opacity: 0.8;
+  }
+
+  ${({ isListening }) =>
+    isListening &&
+    css`
+      svg {
+        animation: ${brighten} 0.3s ease-in-out infinite alternate;
+      }
+    `}
+`;
+
 function Deaf() {
-  const [isSubmitIconHovered, setSubmitIconHovered] = useState(false);
-  const [isVoiceIconHovered, setVoiceIconHovered] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const { transcript, listening, resetTranscript } = useSpeechRecognition();
 
-  const SubmitIcon = () => (
-    <Icon
-      onMouseEnter={() => setSubmitIconHovered(true)}
-      onMouseLeave={() => setSubmitIconHovered(false)}
-      hover={isSubmitIconHovered}
-      xmlns="http://www.w3.org/2000/svg"
-      width="30"
-      height="26"
-      viewBox="0 0 24 21"
-      fill="none"
-    >
-      <path
-        d="M8.77136 6.73173H10.7205M8.77136 8.91954H10.7205M18.1272 9.34035V10.0219C18.1272 12.9914 15.3783 15.3989 11.9874 15.3989M11.9874 15.3989C8.59652 15.3989 5.84766 12.9914 5.84766 10.0219V9.34035M11.9874 15.3989L11.9872 17.6708M9.35571 17.6708H14.6184M11.9876 13.1269C10.0501 13.1269 8.47918 11.7705 8.47918 10.0976V5.55368C8.47918 3.88077 10.0501 2.52441 11.9876 2.52441C13.9252 2.52441 15.4961 3.88077 15.4961 5.55368V10.0976C15.4961 11.7705 13.9252 13.1269 11.9876 13.1269Z"
-        stroke="white"
-        stroke-opacity="0.6"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </Icon>
-  );
+  const handleVoiceButtonClick = () => {
+    if (listening) {
+      SpeechRecognition.stopListening();
+      setIsListening(false);
+    } else {
+      SpeechRecognition.startListening();
+      setIsListening(true);
+    }
+  };
 
-  const VoiceIcon = () => (
-    <Icon
-      onMouseEnter={() => setVoiceIconHovered(true)}
-      onMouseLeave={() => setVoiceIconHovered(false)}
-      hover={isVoiceIconHovered}
-      xmlns="http://www.w3.org/2000/svg"
-      width="30"
-      height="30"
-      viewBox="0 0 24 24"
-      fill="none"
-    >
-      <path
-        d="M16 12.001H5M16 12.001L12 8M16 12.001L12 16.002M19 5V19.001"
-        stroke="white"
-        stroke-opacity="0.5"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </Icon>
-  );
+  const handleSubmitButtonClick = () => {
+    // Handle submit button click here
+  };
+
   return (
     <StyledDeaf>
       <Header />
       <Canvas>{/* Add your 3D elements here */}</Canvas>
       <InputContainer>
-        <Input placeholder="Convert Voice to ISL..." />
-        <SubmitIcon />
-        <VoiceIcon />
+        <Input
+          placeholder="Convert Voice to ISL..."
+          value={transcript}
+          readOnly
+        />
+        <Button onClick={handleSubmitButtonClick}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <path
+              d="M16 12.001H5M16 12.001L12 8M16 12.001L12 16.002M19 5V19.001"
+              stroke="currentColor"
+              stroke-opacity="0.5"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </Button>
+        <Button isListening={isListening} onClick={handleVoiceButtonClick}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="21"
+            viewBox="0 0 24 21"
+            fill="none"
+          >
+            <path
+              d="M8.77136 6.73173H10.7205M8.77136 8.91954H10.7205M18.1272 9.34035V10.0219C18.1272 12.9914 15.3783 15.3989 11.9874 15.3989M11.9874 15.3989C8.59652 15.3989 5.84766 12.9914 5.84766 10.0219V9.34035M11.9874 15.3989L11.9872 17.6708M9.35571 17.6708H14.6184M11.9876 13.1269C10.0501 13.1269 8.47918 11.7705 8.47918 10.0976V5.55368C8.47918 3.88077 10.0501 2.52441 11.9876 2.52441C13.9252 2.52441 15.4961 3.88077 15.4961 5.55368V10.0976C15.4961 11.7705 13.9252 13.1269 11.9876 13.1269Z"
+              stroke="currentColor"
+              stroke-opacity="0.6"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </Button>
       </InputContainer>
     </StyledDeaf>
   );
