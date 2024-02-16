@@ -1,27 +1,32 @@
+import "regenerator-runtime/runtime";
 import React, { useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import styled, { css, keyframes } from "styled-components";
 import Header from "../Component/header/Header";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+
+import Manus from "../Component/model/Manus";
 
 const StyledDeaf = styled.div`
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background-color: #000;
+  background-color: #040d11;
   align-items: center;
   justify-content: center;
 `;
 
-const Canvas = styled.div`
-  flex-grow: 1;
-  background-color: #040d11;
-  border-radius: 10px;
-  margin: 30px;
-  width: 40%; // Adjust this value as needed
-`;
+// const Canvas = styled.div`
+//   flex-grow: 1;
+//   background-color: black;
+//   border-radius: 10px;
+//   margin: 30px;
+//   width: 40%; // Adjust this value as needed
+// `;
 
 const InputContainer = styled.div`
   display: flex;
@@ -111,7 +116,12 @@ function Deaf() {
   return (
     <StyledDeaf>
       <Header />
-      <Canvas>{/* Add your 3D elements here */}</Canvas>
+
+      <Canvas>
+        <ambientLight intensity={2} />
+        <OrbitControls />
+        {/* <Manus /> */}
+      </Canvas>
       <InputContainer>
         <Input
           placeholder="Convert Voice to ISL..."
