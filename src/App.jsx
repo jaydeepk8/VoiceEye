@@ -17,6 +17,7 @@ import Deaf from "./pages/Deaf";
 import Cursor from "./Component/Cursor";
 import Home from "./Home";
 import Loader from "./Loader";
+import Manus from "./Component/model/Manus";
 
 function App() {
   const location = useLocation();
@@ -31,6 +32,7 @@ function App() {
       <Route path="/SecondSection" element={<SecondSection />} />
       <Route path="/ThirdSection" element={<ThirdSection />} />
       <Route path="/Deaf" element={<Deaf />} />
+      <Route path="/Manus" element={<Manus />} />
 
       <Route path="/Footers" element={<Footers />} />
     </Routes>
