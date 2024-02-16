@@ -8,7 +8,7 @@ import Header from "../Component/header/Header";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 
-import Manus from "../Component/model/Manus";
+// import Manus from "../Component/model/Manus";
 
 const StyledDeaf = styled.div`
   display: flex;
@@ -19,14 +19,6 @@ const StyledDeaf = styled.div`
   align-items: center;
   justify-content: center;
 `;
-
-// const Canvas = styled.div`
-//   flex-grow: 1;
-//   background-color: black;
-//   border-radius: 10px;
-//   margin: 30px;
-//   width: 40%; // Adjust this value as needed
-// `;
 
 const InputContainer = styled.div`
   display: flex;
