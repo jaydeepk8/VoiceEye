@@ -8,7 +8,7 @@ import Header from "../Component/header/Header";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 
-// import Manus from "../Component/model/Manus";
+import Manus from "../Component/model/Manus";
 
 const StyledDeaf = styled.div`
   display: flex;
@@ -109,10 +109,10 @@ function Deaf() {
     <StyledDeaf>
       <Header />
 
-      <Canvas>
+      <Canvas gl={{ alpha: false }}>
         <ambientLight intensity={2} />
         <OrbitControls />
-        {/* <Manus /> */}
+        <Manus />
       </Canvas>
       <InputContainer>
         <Input

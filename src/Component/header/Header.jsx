@@ -127,13 +127,14 @@ function Header() {
         <div />
       </Hamburger>
       <NavLinks open={open}>
-        <NavLink href="#">Home</NavLink>
+        <NavLink href="https://chic-arithmetic-3e447a.netlify.app/">
+          Home
+        </NavLink>
         <NavLink href="#">Project</NavLink>
-        <NavLink href="#">ISL to Voice</NavLink>
-        <NavLink href="#">Voice to ISL</NavLink>
+        <NavLink href="https://voice-isl.vercel.app/">ISL to Voice</NavLink>
+        <NavLink href="https://voice-eye.vercel.app/test">Voice to ISL</NavLink>
       </NavLinks>
     </StyledHeader>
   );
 }
-
 export default Header;
