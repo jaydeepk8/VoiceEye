@@ -27,6 +27,7 @@ from dataset import (
     DATA_ROOT,
     build_windows,
     discover,
+    feature_columns,
     label_map,
     split_by_signer,
     standardiser,
@@ -93,7 +94,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=DATA_ROOT)
     parser.add_argument("--words", help="comma separated subset")
-    parser.add_argument("--window", type=int, default=30)
+    parser.add_argument("--window", type=int, default=45)
     parser.add_argument("--stride", type=int, default=5)
     parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--batch", type=int, default=64)
@@ -101,6 +102,8 @@ def main() -> int:
     parser.add_argument("--layers", type=int, default=2)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--dropout", type=float, default=0.3)
+    parser.add_argument("--keep-z", action="store_true",
+                        help="keep MediaPipe depth; it measurably hurts, see ablate.py")
     parser.add_argument("--noise", type=float, default=0.01,
                         help="gaussian jitter added to training windows")
     parser.add_argument("--test-signers", help="comma separated; default picks automatically")
@@ -108,6 +111,9 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--allow-clip-split", action="store_true",
                         help="permit a same-signer split; results are NOT generalisation")
+    parser.add_argument("--cv-mean", type=float,
+                        help="leave-one-session-out mean from ablate.py; the honest headline "
+                             "number, stored so /health reports it instead of one fold")
     parser.add_argument("--out", type=Path, default=CHECKPOINT_DIR / "sign_gru.pt")
     args = parser.parse_args()
 
@@ -136,6 +142,10 @@ def main() -> int:
 
     train_x, train_y, _ = build_windows(train_clips, labels, args.window, args.stride)
     test_x, test_y, test_ids = build_windows(test_clips, labels, args.window, args.stride)
+    keep = feature_columns(train_x.shape[-1], drop_z=not args.keep_z)
+    if keep is not None:
+        train_x, test_x = train_x[:, :, keep], test_x[:, :, keep]
+
     mean, std = standardiser(train_x)
     train_x = (train_x - mean) / std
     test_x = (test_x - mean) / std
@@ -153,8 +163,11 @@ def main() -> int:
         TensorDataset(train_tensor, train_labels), batch_size=args.batch, shuffle=True
     )
 
-    best = -1.0
-    best_state = None
+    # Train a fixed number of epochs and keep whatever comes out. Watching the
+    # test score and keeping the best epoch is model selection on the test set:
+    # it reliably buys several points that do not exist on new data. Progress is
+    # printed for visibility, never acted on. Use ablate.py for the honest
+    # cross-validated estimate.
     for epoch in range(1, args.epochs + 1):
         model.train()
         total = 0.0
@@ -167,25 +180,21 @@ def main() -> int:
             optimiser.step()
             total += loss.item() * len(batch_x)
 
-        window_accuracy, clip_accuracy, _ = evaluate(
-            model, test_tensor, test_labels, test_ids, len(labels)
-        )
-        if clip_accuracy > best:
-            best = clip_accuracy
-            best_state = {k: v.clone() for k, v in model.state_dict().items()}
         if epoch % 5 == 0 or epoch == 1:
+            window_accuracy, clip_accuracy, _ = evaluate(
+                model, test_tensor, test_labels, test_ids, len(labels)
+            )
             print(
                 f"epoch {epoch:3d}  loss {total/len(train_tensor):.4f}  "
                 f"window {window_accuracy:.3f}  clip {clip_accuracy:.3f}"
             )
 
-    model.load_state_dict(best_state)
     window_accuracy, clip_accuracy, confusion = evaluate(
         model, test_tensor, test_labels, test_ids, len(labels)
     )
     names = [w for w, _ in sorted(labels.items(), key=lambda kv: kv[1])]
 
-    print(f"\nbest clip accuracy {clip_accuracy:.3f}  (window {window_accuracy:.3f})")
+    print(f"\nfinal clip accuracy {clip_accuracy:.3f}  (window {window_accuracy:.3f})")
     print("\nconfusion (rows = truth, cols = predicted)")
     width = max(len(n) for n in names) + 1
     print(" " * width + "".join(f"{n[:6]:>7s}" for n in names))
@@ -200,10 +209,12 @@ def main() -> int:
             "mean": mean,
             "std": std,
             "window": args.window,
+            "keep_columns": keep,
             "input_dim": int(train_x.shape[-1]),
             "hidden": args.hidden,
             "layers": args.layers,
             "clip_accuracy": clip_accuracy,
+            "cv_mean": args.cv_mean,
             "test_signers": sorted({c.signer for c in test_clips}),
             "signer_independent": len({c.signer for c in clips}) > 1,
         },

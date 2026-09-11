@@ -139,6 +139,10 @@ class SignRecogniser:
         self.std = np.asarray(blob["std"], dtype=np.float32)
         self.signer_independent = bool(blob.get("signer_independent", False))
         self.clip_accuracy = blob.get("clip_accuracy")
+        self.cv_mean = blob.get("cv_mean")
+        # Which feature columns this model was fitted on. Applying anything
+        # else would feed it a differently shaped world than it learned.
+        self.keep_columns = blob.get("keep_columns")
 
         self._torch = torch
         self.model = SignGRU(
@@ -171,7 +175,11 @@ class SignRecogniser:
             return None, 0.0
 
         window = np.stack(self._buffer)
+        # Motion is measured on the full vector, before column selection, so
+        # the gate does not change when the feature set does.
         motion = motion_energy(window)
+        if self.keep_columns is not None:
+            window = window[:, self.keep_columns]
         normalised = (window - self.mean) / self.std
         with self._torch.no_grad():
             logits = self.model(self._torch.from_numpy(normalised[None]))

@@ -66,6 +66,7 @@ def health() -> dict:
         "window": recogniser.window,
         "signer_independent": recogniser.signer_independent,
         "clip_accuracy": recogniser.clip_accuracy,
+        "cv_mean": recogniser.cv_mean,
     }
 
 

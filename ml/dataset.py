@@ -153,6 +153,33 @@ def build_windows(
     )
 
 
+# Mirror of landmarks.POSE_DIM / HAND_DIM, repeated rather than imported so
+# this module stays free of mediapipe and torch.
+POSE_DIM = 27
+HAND_DIM = 63
+
+
+def feature_columns(dim: int, drop_z: bool = True) -> list[int] | None:
+    """Which feature columns to train on. None means all of them.
+
+    Dropping z measurably helps: under leave-one-session-out it moved a
+    30-frame model from 0.730 to 0.793, and a 45-frame model to 0.917. That
+    matches what the resolution-stability check showed at the very start --
+    MediaPipe's monocular depth was by far the least repeatable part of the
+    vector, and the GRU was fitting its noise.
+
+    The clips on disk keep their z regardless. Selection happens here so the
+    decision can be revisited without re-extracting anything, and the chosen
+    columns travel in the checkpoint so inference applies the same ones.
+    """
+    if not drop_z:
+        return None
+    landmarks_end = POSE_DIM + 2 * HAND_DIM
+    keep = [i for i in range(landmarks_end) if i % 3 != 2]
+    keep.extend(range(landmarks_end, dim))  # presence flags have no z
+    return keep
+
+
 def standardiser(train_x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Per-feature mean/std from TRAINING windows only.
 
