@@ -127,6 +127,18 @@ class SignRecogniser:
     def reset(self) -> None:
         self._buffer.clear()
 
+    def session(self) -> "SignRecogniser":
+        """A recogniser with its own frame buffer over the same weights.
+
+        The server needs one buffer per connection -- two viewers sharing a
+        window would interleave their hands into one sequence -- but reloading
+        the checkpoint per connection would be wasteful.
+        """
+        clone = object.__new__(SignRecogniser)
+        clone.__dict__.update(self.__dict__)
+        clone._buffer = deque(maxlen=self.window)
+        return clone
+
     def feed(self, vector: np.ndarray) -> tuple[np.ndarray | None, float]:
         """Add one frame. Returns (probabilities, motion) once the window fills."""
         self._buffer.append(vector.astype(np.float32))
