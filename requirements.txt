@@ -3,3 +3,8 @@
 mediapipe==1.0.1
 opencv-python==5.0.0.93
 numpy==2.5.3
+
+# CPU build on purpose. The default Windows wheel bundles CUDA and costs
+# several GB; a 2-layer GRU has no use for a GPU.
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch==2.14.0
