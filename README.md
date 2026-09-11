@@ -56,48 +56,81 @@ running, and it has not just spoken. Then it stays quiet for a cooldown.
 ```bash
 python ml/record.py --word hello --signer yourname --clips 30   # capture
 python ml/ingest_include.py --zip data/Greetings_1of2.zip       # INCLUDE corpus
-python ml/train.py --epochs 40                                  # train
+python ml/label_sessions.py                                     # recover session groups
+python ml/train.py --epochs 30                                  # train
+python ml/ablate.py                                             # cross-validated comparison
 python ml/live.py                                               # webcam demo
 uvicorn server.app:app --port 8000                              # serve to browser
 ```
 
 Then `npm run dev` and open the sign-to-voice page.
 
-End to end on held-out session clips, 4 of 5 words are recognised and spoken
-correctly, one word per sign. `good_morning` is the miss.
+End to end on held-out session clips of the five-word model, 4 of 5 words are
+recognised and spoken correctly, one word per sign.
 
 ## Results
 
-Five words from INCLUDE's Greetings set — *hello, good morning, good afternoon,
-how are you, alright* — 105 clips.
+Nine words from INCLUDE's Greetings set - *hello, good morning, good afternoon,
+good evening, good night, how are you, alright, pleased, thank you* - 189 clips.
 
-| Evaluation | Clip accuracy |
+All numbers are leave-one-session-out: a whole recording session is held out,
+the model trains from scratch, and a clip's windows are pooled into one answer.
+
+| Vocabulary | Mean clip accuracy | Range |
+|---|---|---|
+| 5 words | **0.917** | 0.79 - 1.00 |
+| 9 words | **0.671** | 0.44 - 0.82 |
+
+Chance is 0.20 and 0.11 respectively. For reference, published results on the
+full [INCLUDE](https://zenodo.org/records/4010759) benchmark are 94.5% on its
+50-word subset and 85.6% across all 263 words.
+
+### Two ways these numbers could have been wrong
+
+A random split instead of a session split scores **1.000** on the five-word set.
+INCLUDE's clips come in near-identical takes, so splitting randomly puts the
+same take on both sides. `dataset.py` refuses to do it unless overridden.
+
+Keeping the best epoch as judged by the test set added about **13 points**:
+0.730 became 0.864. Both `train.py` and `ablate.py` now train a fixed number of
+epochs and score once, at the end.
+
+### What the ablations settled
+
+| Change | 5-word CV |
 |---|---|
-| Random split, same recording sessions | **1.000** |
-| Leave-one-session-out, 5 folds | **0.864** (sd 0.046, range 0.800–0.944) |
+| baseline, 30-frame window, with depth | 0.730 |
+| drop MediaPipe z | 0.793 |
+| 45-frame window | 0.836 |
+| both | **0.917** |
 
-Both numbers come from the same data and the same model. The first one is
-worthless: INCLUDE's clips come in near-identical takes, so a random split puts
-the same take on both sides and measures memorisation. The gap between the two
-rows *is* the leakage, and it is the reason `dataset.py` refuses to produce a
-single-signer split unless you explicitly override it.
+MediaPipe's monocular depth was hurting. That matches the first measurement in
+the project: across two resolutions of the same photo, pose z deviated by 0.317
+against a median of 0.034 for everything else. The GRU was fitting its noise.
+Clips keep their z on disk; `feature_columns()` selects it out, and the choice
+travels in the checkpoint so inference applies the same columns.
 
-For reference, published results on the full [INCLUDE](https://zenodo.org/records/4010759)
-benchmark are 94.5% on its 50-word subset and 85.6% across all 263 words. 0.864
-on five words sits in a believable place next to those; anything near 1.0 does
-not.
+Longer windows do not help beyond 45, despite a median clip of 65 frames: 60
+scores 0.461 and 75 scores 0.209. Longer windows yield fewer training windows
+per clip and pad most of them.
 
-The one systematic error is `good_morning` misread as `good_afternoon` — 4 of 4
-in the worst fold, with every other class clean. The two signs share an opening
-component, so this is the model failing where the signs genuinely overlap.
+### Where it fails
+
+The four time-of-day greetings collapse into each other. In the worst fold,
+*hello*, *how are you*, *pleased* and *thank you* were perfect while afternoon,
+evening, morning and night formed a confusion chain. They share a "good"
+component and the model cannot separate what follows it. Five-word accuracy is
+high partly because that family is not in it.
 
 **Caveat on the sessions.** INCLUDE ships no signer field. The groups come from
-clustering the source filenames' camera numbering, which falls into exactly five
-groups with matching sizes and number bands across all five words — see
-`label_sessions.py`. That is strong evidence of five recording sources, but it
-is not proof of five *people*. Holding out a session is strictly harder than a
-random split, so treat 0.864 as a floor. A real signer-independent number needs
-clips recorded by someone not in this dataset.
+clustering the source filenames' camera numbering - see `label_sessions.py`.
+Eight of nine words fall into five clean groups; `good_evening` splits into six
+and is forced to five. The numbering is not globally unique either: in the
+second archive, *good evening* and *good night* share numbers 1-5. So a session
+is a recording source, not provably a person. Holding one out is still strictly
+harder than a random split, so treat these as a floor. A real signer-independent
+number needs clips from someone outside the dataset - that is what `record.py`
+is for.
 
 ## Tests
 
