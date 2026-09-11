@@ -30,6 +30,9 @@ from live import Segmenter, SignRecogniser  # noqa: E402
 
 CHECKPOINT = ROOT / "ml" / "checkpoints" / "sign_gru.pt"
 
+# Consecutive undetected frames before we treat the signer as gone.
+LOST_AFTER = 10
+
 app = FastAPI(title="VoiceEye sign recognition")
 app.add_middleware(
     CORSMiddleware,
@@ -80,6 +83,7 @@ async def sign_socket(socket: WebSocket) -> None:
     segmenter = Segmenter(recogniser.labels)
     extractor = LandmarkExtractor(video_mode=True)
     index = 0
+    missed = 0
 
     await socket.send_json({"type": "ready", "labels": recogniser.labels})
 
@@ -94,16 +98,25 @@ async def sign_socket(socket: WebSocket) -> None:
             index += 1
 
             if not features.usable:
-                session.reset()
+                # A frame here and there loses the hands -- motion blur, a hand
+                # leaving the picture for an instant. Dropping the frame is
+                # right; dropping the whole window is not, because rebuilding
+                # it takes a second and the sign is over by then. Only give up
+                # once the subject has genuinely gone.
+                missed += 1
+                if missed >= LOST_AFTER:
+                    session.reset()
+                    segmenter.reset()
                 await socket.send_json({"type": "status", "framed": False})
                 continue
+            missed = 0
 
             probabilities, motion = session.feed(features.vector)
             if probabilities is None:
                 await socket.send_json({"type": "status", "framed": True, "warming": True})
                 continue
 
-            word = segmenter.update(probabilities, motion > 0.004)
+            word = segmenter.update(probabilities, motion > 0.02)
             if word:
                 await socket.send_json({"type": "sign", "word": word})
             else:
