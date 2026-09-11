@@ -1,0 +1,5 @@
+# Python 3.12 exactly. mediapipe publishes no 3.13+ wheels, and numpy>=2.5
+# requires >=3.12, so the window is one version wide.
+mediapipe==1.0.1
+opencv-python==5.0.0.93
+numpy==2.5.3
