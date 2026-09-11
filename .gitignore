@@ -22,3 +22,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python / ML
+.venv/
+__pycache__/
+*.py[cod]
+
+# MediaPipe task bundles (~13MB) - fetch with: python ml/download_models.py
+ml/models/*.task
+
+# Datasets and trained weights: never in git. The 57MB .glb already in this
+# repo's history is the cautionary tale.
+data/
+ml/checkpoints/*.pt
+*.npy
+*.mp4
