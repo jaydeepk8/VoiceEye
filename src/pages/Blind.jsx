@@ -8,12 +8,12 @@ import Header from "../Component/header/Header";
 // Frames go out as JPEGs over a WebSocket rather than running a model in the
 // page: the pipeline is MediaPipe plus a GRU in Python, and keeping one
 // implementation means the thing tuned at the command line is the thing that
-// ships. At this size the bandwidth is unremarkable -- a 256px JPEG is around
-// 20KB, and we send twelve a second.
+// ships. At this size the bandwidth is unremarkable -- a 640px JPEG is around
+// 60KB, and we send twelve a second.
 
 const SERVER = import.meta.env.VITE_SIGN_SERVER ?? "ws://127.0.0.1:8000";
 const SEND_FPS = 12;
-const CAPTURE_WIDTH = 256;
+const CAPTURE_WIDTH = 640; // must match ingest_include.py --width: features differ by scale
 
 const Page = styled.div`
   min-height: 100vh;

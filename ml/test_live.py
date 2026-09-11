@@ -65,6 +65,26 @@ def test_flapping_predictions_do_not_fire():
     assert run(segmenter, script) == []
 
 
+def test_near_tie_never_fires():
+    """Two classes neck and neck means undecided, however often it repeats.
+
+    This is the case raw confidence cannot catch: with a flat softmax both
+    classes can clear the threshold while the model is plainly torn.
+    """
+    segmenter = Segmenter(LABELS, agree=2, threshold=0.3, cooldown=0, margin=0.12)
+    tied = np.array([0.45, 0.10, 0.45], dtype=np.float32)
+    emitted = [segmenter.update(tied, True) for _ in range(20)]
+    assert not any(emitted)
+
+
+def test_clear_winner_fires_on_a_flat_softmax():
+    """The counterpart: a modest top score still fires if it leads clearly."""
+    segmenter = Segmenter(LABELS, agree=2, threshold=0.3, cooldown=0, margin=0.12)
+    decided = np.array([0.46, 0.27, 0.27], dtype=np.float32)
+    emitted = [segmenter.update(decided, True) for _ in range(4)]
+    assert "hello" in emitted
+
+
 def test_one_sign_emits_once():
     """The whole reason cooldown exists: holding a sign must not repeat it."""
     segmenter = Segmenter(LABELS, agree=3, cooldown=10)

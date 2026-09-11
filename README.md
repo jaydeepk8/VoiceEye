@@ -63,6 +63,9 @@ uvicorn server.app:app --port 8000                              # serve to brows
 
 Then `npm run dev` and open the sign-to-voice page.
 
+End to end on held-out session clips, 4 of 5 words are recognised and spoken
+correctly, one word per sign. `good_morning` is the miss.
+
 ## Results
 
 Five words from INCLUDE's Greetings set — *hello, good morning, good afternoon,
