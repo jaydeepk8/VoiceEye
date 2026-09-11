@@ -63,17 +63,38 @@ uvicorn server.app:app --port 8000                              # serve to brows
 
 Then `npm run dev` and open the sign-to-voice page.
 
-## On accuracy
+## Results
 
-Splits are grouped by signer, and `dataset.py` refuses to produce one when the
-data contains a single signer rather than quietly falling back to a random
-split. Two clips of the same person signing the same word are near-duplicates;
-splitting randomly puts them on both sides and reports a number that says
-nothing about how the system handles a new person.
+Five words from INCLUDE's Greetings set — *hello, good morning, good afternoon,
+how are you, alright* — 105 clips.
 
-For reference, published results on the [INCLUDE](https://zenodo.org/records/4010759)
-benchmark are 94.5% on its 50-word subset and 85.6% across all 263 words. Any
-number far above that on a handful of words is measuring memorisation.
+| Evaluation | Clip accuracy |
+|---|---|
+| Random split, same recording sessions | **1.000** |
+| Leave-one-session-out, 5 folds | **0.864** (sd 0.046, range 0.800–0.944) |
+
+Both numbers come from the same data and the same model. The first one is
+worthless: INCLUDE's clips come in near-identical takes, so a random split puts
+the same take on both sides and measures memorisation. The gap between the two
+rows *is* the leakage, and it is the reason `dataset.py` refuses to produce a
+single-signer split unless you explicitly override it.
+
+For reference, published results on the full [INCLUDE](https://zenodo.org/records/4010759)
+benchmark are 94.5% on its 50-word subset and 85.6% across all 263 words. 0.864
+on five words sits in a believable place next to those; anything near 1.0 does
+not.
+
+The one systematic error is `good_morning` misread as `good_afternoon` — 4 of 4
+in the worst fold, with every other class clean. The two signs share an opening
+component, so this is the model failing where the signs genuinely overlap.
+
+**Caveat on the sessions.** INCLUDE ships no signer field. The groups come from
+clustering the source filenames' camera numbering, which falls into exactly five
+groups with matching sizes and number bands across all five words — see
+`label_sessions.py`. That is strong evidence of five recording sources, but it
+is not proof of five *people*. Holding out a session is strictly harder than a
+random split, so treat 0.864 as a floor. A real signer-independent number needs
+clips recorded by someone not in this dataset.
 
 ## Tests
 
