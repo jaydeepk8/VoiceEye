@@ -31,9 +31,11 @@ __pycache__/
 # MediaPipe task bundles (~13MB) - fetch with: python ml/download_models.py
 ml/models/*.task
 
-# Datasets and trained weights: never in git. The 57MB .glb already in this
-# repo's history is the cautionary tale.
-data/
-ml/checkpoints/*.pt
-*.npy
+# Source video and archives stay out - INCLUDE is 56GB, and the 57MB .glb
+# already in this repo's history is the cautionary tale.
+data/*.zip
 *.mp4
+
+# Extracted landmark features and the trained model ARE committed (~9MB).
+# They are derived from INCLUDE (CC-BY-4.0) and are what makes train.py
+# reproducible without a 2.7GB download.

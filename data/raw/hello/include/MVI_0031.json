@@ -1,0 +1,10 @@
+{
+  "word": "hello",
+  "signer": "include_s0",
+  "source": "Greetings/48. Hello/MVI_0031.MOV",
+  "frames": 65,
+  "feature_dim": 155,
+  "usable_frames": 65,
+  "width": 640,
+  "signer_inferred": true
+}

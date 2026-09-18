@@ -1,0 +1,10 @@
+{
+  "word": "alright",
+  "signer": "include_s0",
+  "source": "Greetings/50. Alright/MVI_0038.MOV",
+  "frames": 84,
+  "feature_dim": 155,
+  "usable_frames": 79,
+  "width": 640,
+  "signer_inferred": true
+}

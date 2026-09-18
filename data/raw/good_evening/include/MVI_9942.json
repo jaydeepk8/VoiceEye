@@ -1,0 +1,10 @@
+{
+  "word": "good_evening",
+  "signer": "include_s3",
+  "source": "Greetings/53. Good evening/MVI_9942.MOV",
+  "frames": 58,
+  "feature_dim": 155,
+  "usable_frames": 58,
+  "width": 640,
+  "signer_inferred": true
+}

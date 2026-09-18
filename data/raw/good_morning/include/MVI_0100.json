@@ -1,0 +1,10 @@
+{
+  "word": "good_morning",
+  "signer": "include_s1",
+  "source": "Greetings/51. Good Morning/MVI_0100.MOV",
+  "frames": 63,
+  "feature_dim": 155,
+  "usable_frames": 48,
+  "width": 640,
+  "signer_inferred": true
+}
