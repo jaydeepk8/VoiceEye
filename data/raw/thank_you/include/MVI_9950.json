@@ -1,0 +1,10 @@
+{
+  "word": "thank_you",
+  "signer": "include_s3",
+  "source": "Greetings/55. Thank you/MVI_9950.MOV",
+  "frames": 52,
+  "feature_dim": 155,
+  "usable_frames": 40,
+  "width": 640,
+  "signer_inferred": true
+}

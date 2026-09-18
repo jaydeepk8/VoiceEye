@@ -1,0 +1,10 @@
+{
+  "word": "alright",
+  "signer": "include_s4",
+  "source": "Greetings/50. Alright/MVI_9990.MOV",
+  "frames": 54,
+  "feature_dim": 155,
+  "usable_frames": 47,
+  "width": 640,
+  "signer_inferred": true
+}

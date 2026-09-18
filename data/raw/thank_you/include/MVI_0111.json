@@ -1,0 +1,10 @@
+{
+  "word": "thank_you",
+  "signer": "include_s2",
+  "source": "Greetings/55. Thank you/MVI_0111.MOV",
+  "frames": 62,
+  "feature_dim": 155,
+  "usable_frames": 49,
+  "width": 640,
+  "signer_inferred": true
+}

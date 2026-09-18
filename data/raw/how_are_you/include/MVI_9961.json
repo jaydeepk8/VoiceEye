@@ -1,0 +1,10 @@
+{
+  "word": "how_are_you",
+  "signer": "include_s3",
+  "source": "Greetings/49. How are you/MVI_9961.MOV",
+  "frames": 92,
+  "feature_dim": 155,
+  "usable_frames": 85,
+  "width": 640,
+  "signer_inferred": true
+}

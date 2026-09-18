@@ -1,0 +1,10 @@
+{
+  "word": "pleased",
+  "signer": "include_s0",
+  "source": "Greetings/56. Pleased/MVI_0009.MOV",
+  "frames": 56,
+  "feature_dim": 155,
+  "usable_frames": 55,
+  "width": 640,
+  "signer_inferred": true
+}

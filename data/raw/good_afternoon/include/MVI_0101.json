@@ -1,0 +1,10 @@
+{
+  "word": "good_afternoon",
+  "signer": "include_s1",
+  "source": "Greetings/52. Good afternoon/MVI_0101.MOV",
+  "frames": 69,
+  "feature_dim": 155,
+  "usable_frames": 54,
+  "width": 640,
+  "signer_inferred": true
+}

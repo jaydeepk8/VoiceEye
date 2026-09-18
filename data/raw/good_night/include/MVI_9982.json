@@ -1,0 +1,10 @@
+{
+  "word": "good_night",
+  "signer": "include_s4",
+  "source": "Greetings/54. Good night/MVI_9982.MOV",
+  "frames": 84,
+  "feature_dim": 155,
+  "usable_frames": 84,
+  "width": 640,
+  "signer_inferred": true
+}
