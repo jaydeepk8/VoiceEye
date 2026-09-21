@@ -15,6 +15,7 @@ have two people's hands feeding one window.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import sys
 from pathlib import Path
@@ -27,7 +28,7 @@ from fastapi.middleware.cors import CORSMiddleware
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "ml"))
 
-from landmarks import HAND_MODEL, POSE_MODEL, LandmarkExtractor  # noqa: E402
+from landmarks import HAND_MODEL, POSE_MODEL, LandmarkExtractor, normalise  # noqa: E402
 from live import Segmenter, SignRecogniser  # noqa: E402
 
 CHECKPOINT_DIR = ROOT / "ml" / "checkpoints"
@@ -64,6 +65,21 @@ _extractor: LandmarkExtractor | None = None
 _clock = 0
 _in_use = asyncio.Lock()
 _current_stop: asyncio.Event | None = None
+
+
+def from_landmarks(payload: dict) -> tuple[np.ndarray, bool]:
+    def points(key, count):
+        raw = payload.get(key)
+        if not raw or len(raw) != count:
+            return None
+        return np.asarray(raw, dtype=np.float32).reshape(count, 3)
+
+    pose = points("pose", 33)
+    left = points("left", 21)
+    right = points("right", 21)
+    aspect = float(payload.get("aspect") or 1.0)
+    vector = normalise(pose, left, right, aspect)
+    return vector, bool(pose is not None and (left is not None or right is not None))
 
 
 def get_extractor() -> LandmarkExtractor:
@@ -123,16 +139,6 @@ async def sign_socket(socket: WebSocket) -> None:
     _current_stop = stop
 
     async with _in_use:
-        try:
-            extractor = get_extractor()
-        except Exception as exc:
-            logger.exception("extractor setup failed")
-            await socket.send_json(
-                {"type": "error", "message": f"{type(exc).__name__}: {exc}"}
-            )
-            await socket.close()
-            return
-
         session = recogniser.session()
         segmenter = Segmenter(recogniser.labels)
         missed = 0
@@ -144,7 +150,7 @@ async def sign_socket(socket: WebSocket) -> None:
                 if stop.is_set():
                     break
 
-                receiving = asyncio.ensure_future(socket.receive_bytes())
+                receiving = asyncio.ensure_future(socket.receive())
                 halting = asyncio.ensure_future(stop.wait())
                 done, pending = await asyncio.wait(
                     {receiving, halting},
@@ -155,15 +161,23 @@ async def sign_socket(socket: WebSocket) -> None:
                     task.cancel()
                 if receiving not in done:
                     break
-                payload = receiving.result()
-                frame = cv2.imdecode(np.frombuffer(payload, np.uint8), cv2.IMREAD_COLOR)
-                if frame is None:
-                    continue
+                message = receiving.result()
+                if message.get("type") == "websocket.disconnect":
+                    break
 
-                _clock += 33
-                features = extractor.extract(frame, _clock)
+                if message.get("text") is not None:
+                    vector, usable = from_landmarks(json.loads(message["text"]))
+                else:
+                    frame = cv2.imdecode(
+                        np.frombuffer(message["bytes"], np.uint8), cv2.IMREAD_COLOR
+                    )
+                    if frame is None:
+                        continue
+                    _clock += 33
+                    extracted = get_extractor().extract(frame, _clock)
+                    vector, usable = extracted.vector, extracted.usable
 
-                if not features.usable:
+                if not usable:
                     # A frame here and there loses the hands -- motion blur, a hand
                     # leaving the picture for an instant. Dropping the frame is
                     # right; dropping the whole window is not, because rebuilding
@@ -177,7 +191,7 @@ async def sign_socket(socket: WebSocket) -> None:
                     continue
                 missed = 0
 
-                probabilities, motion = session.feed(features.vector)
+                probabilities, motion = session.feed(vector)
                 if probabilities is None:
                     await socket.send_json({"type": "status", "framed": True, "warming": True})
                     continue
