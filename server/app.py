@@ -14,6 +14,7 @@ have two people's hands feeding one window.
 
 from __future__ import annotations
 
+import logging
 import sys
 from pathlib import Path
 
@@ -25,7 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "ml"))
 
-from landmarks import LandmarkExtractor  # noqa: E402
+from landmarks import HAND_MODEL, POSE_MODEL, LandmarkExtractor  # noqa: E402
 from live import Segmenter, SignRecogniser  # noqa: E402
 
 CHECKPOINT_DIR = ROOT / "ml" / "checkpoints"
@@ -40,6 +41,8 @@ def find_checkpoint() -> Path | None:
 
 # Consecutive undetected frames before we treat the signer as gone.
 LOST_AFTER = 10
+
+logger = logging.getLogger("voiceeye")
 
 app = FastAPI(title="VoiceEye sign recognition")
 app.add_middleware(
@@ -77,6 +80,10 @@ def health() -> dict:
         "clip_accuracy": recogniser.clip_accuracy,
         "cv_mean": recogniser.cv_mean,
         "backend": recogniser.backend,
+        "models": {
+            p.name: (p.stat().st_size if p.exists() else None)
+            for p in (HAND_MODEL, POSE_MODEL)
+        },
     }
 
 
@@ -140,5 +147,13 @@ async def sign_socket(socket: WebSocket) -> None:
                 })
     except WebSocketDisconnect:
         pass
+    except Exception as exc:
+        logger.exception("websocket loop failed")
+        try:
+            await socket.send_json(
+                {"type": "error", "message": f"{type(exc).__name__}: {exc}"}
+            )
+        except Exception:
+            pass
     finally:
         extractor.close()

@@ -6,7 +6,7 @@ services:
     plan: free
     region: singapore
     healthCheckPath: /health
-    autoDeploy: false
+    autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
         value: "3.12"
