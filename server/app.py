@@ -28,7 +28,15 @@ sys.path.insert(0, str(ROOT / "ml"))
 from landmarks import LandmarkExtractor  # noqa: E402
 from live import Segmenter, SignRecogniser  # noqa: E402
 
-CHECKPOINT = ROOT / "ml" / "checkpoints" / "sign_gru.pt"
+CHECKPOINT_DIR = ROOT / "ml" / "checkpoints"
+
+
+def find_checkpoint() -> Path | None:
+    for name in ("sign_gru.onnx", "sign_gru.pt"):
+        candidate = CHECKPOINT_DIR / name
+        if candidate.exists():
+            return candidate
+    return None
 
 # Consecutive undetected frames before we treat the signer as gone.
 LOST_AFTER = 10
@@ -48,9 +56,10 @@ def get_recogniser() -> SignRecogniser:
     """Load the checkpoint once and share the weights across connections."""
     global _recogniser
     if _recogniser is None:
-        if not CHECKPOINT.exists():
-            raise FileNotFoundError(f"no checkpoint at {CHECKPOINT}")
-        _recogniser = SignRecogniser(CHECKPOINT)
+        checkpoint = find_checkpoint()
+        if checkpoint is None:
+            raise FileNotFoundError(f"no checkpoint in {CHECKPOINT_DIR}")
+        _recogniser = SignRecogniser(checkpoint)
     return _recogniser
 
 
@@ -67,6 +76,7 @@ def health() -> dict:
         "signer_independent": recogniser.signer_independent,
         "clip_accuracy": recogniser.clip_accuracy,
         "cv_mean": recogniser.cv_mean,
+        "backend": recogniser.backend,
     }
 
 

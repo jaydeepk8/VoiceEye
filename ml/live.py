@@ -128,22 +128,33 @@ class SignRecogniser:
     """Loads a checkpoint and classifies a rolling window of frames."""
 
     def __init__(self, checkpoint: Path):
+        checkpoint = Path(checkpoint)
+        if checkpoint.suffix == ".onnx":
+            self._load_onnx(checkpoint)
+        else:
+            self._load_torch(checkpoint)
+        self._buffer: deque[np.ndarray] = deque(maxlen=self.window)
+
+    def _apply_meta(self, meta: dict, labels: list[str]) -> None:
+        self.labels = labels
+        self.window = int(meta["window"])
+        self.mean = np.asarray(meta["mean"], dtype=np.float32)
+        self.std = np.asarray(meta["std"], dtype=np.float32)
+        self.signer_independent = bool(meta.get("signer_independent", False))
+        self.clip_accuracy = meta.get("clip_accuracy")
+        self.cv_mean = meta.get("cv_mean")
+        self.keep_columns = meta.get("keep_columns")
+
+    def _load_torch(self, checkpoint: Path) -> None:
         import torch
 
         from train import SignGRU
 
         blob = torch.load(checkpoint, map_location="cpu", weights_only=False)
-        self.labels = [w for w, _ in sorted(blob["labels"].items(), key=lambda kv: kv[1])]
-        self.window = int(blob["window"])
-        self.mean = np.asarray(blob["mean"], dtype=np.float32)
-        self.std = np.asarray(blob["std"], dtype=np.float32)
-        self.signer_independent = bool(blob.get("signer_independent", False))
-        self.clip_accuracy = blob.get("clip_accuracy")
-        self.cv_mean = blob.get("cv_mean")
-        # Which feature columns this model was fitted on. Applying anything
-        # else would feed it a differently shaped world than it learned.
-        self.keep_columns = blob.get("keep_columns")
-
+        self._apply_meta(
+            blob, [w for w, _ in sorted(blob["labels"].items(), key=lambda kv: kv[1])]
+        )
+        self.backend = "torch"
         self._torch = torch
         self.model = SignGRU(
             int(blob["input_dim"]), int(blob["hidden"]), int(blob["layers"]),
@@ -151,7 +162,22 @@ class SignRecogniser:
         )
         self.model.load_state_dict(blob["state_dict"])
         self.model.eval()
-        self._buffer: deque[np.ndarray] = deque(maxlen=self.window)
+
+    def _load_onnx(self, checkpoint: Path) -> None:
+        import json
+
+        import onnxruntime
+
+        meta_path = checkpoint.with_suffix(".meta.json")
+        if not meta_path.exists():
+            raise FileNotFoundError(f"missing {meta_path.name} beside {checkpoint.name}")
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        self._apply_meta(meta, list(meta["labels"]))
+        self.backend = "onnx"
+        self._session = onnxruntime.InferenceSession(
+            str(checkpoint), providers=["CPUExecutionProvider"]
+        )
+        self._input_name = self._session.get_inputs()[0].name
 
     def reset(self) -> None:
         self._buffer.clear()
@@ -180,10 +206,16 @@ class SignRecogniser:
         motion = motion_energy(window)
         if self.keep_columns is not None:
             window = window[:, self.keep_columns]
-        normalised = (window - self.mean) / self.std
+        normalised = ((window - self.mean) / self.std)[None].astype(np.float32)
+
+        if self.backend == "onnx":
+            logits = self._session.run(None, {self._input_name: normalised})[0][0]
+            shifted = np.exp(logits - logits.max())
+            return (shifted / shifted.sum()).astype(np.float32), motion
+
         with self._torch.no_grad():
-            logits = self.model(self._torch.from_numpy(normalised[None]))
-            probabilities = self._torch.softmax(logits, dim=1)[0].numpy()
+            output = self.model(self._torch.from_numpy(normalised))
+            probabilities = self._torch.softmax(output, dim=1)[0].numpy()
         return probabilities, motion
 
 

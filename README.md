@@ -132,6 +132,32 @@ harder than a random split, so treat these as a floor. A real signer-independent
 number needs clips from someone outside the dataset - that is what `record.py`
 is for.
 
+## Deploying
+
+The Python server cannot run on Netlify or Vercel. Both are serverless: no
+persistent WebSocket, and the dependency bundle is far past their limits. It
+needs an always-on container. CPU-only is fine - the GRU is 190k parameters and
+MediaPipe is built for CPU.
+
+The server runs ONNX, not torch. `ml/export_onnx.py` converts a checkpoint and
+verifies parity against the torch model before writing it. That keeps torch out
+of the image entirely, which is the difference between fitting a 512MB free
+tier and not.
+
+```
+python ml/export_onnx.py          # sign_gru.onnx + sign_gru.meta.json
+docker build -t voiceeye-server . # or push and let Render build it
+```
+
+`render.yaml` describes the service. On Render, point a new Blueprint at this
+repo. The front end reads the server URL from `VITE_SIGN_SERVER` at build time,
+so set that in Netlify or Vercel to the deployed host with a `wss://` scheme -
+a `ws://` socket from an `https://` page is blocked by the browser.
+
+`SignRecogniser` loads either backend by file extension, so `live.py` keeps
+using the `.pt` locally while the server uses the `.onnx`. Both were checked
+against the same inputs and agree to 3e-07.
+
 ## Tests
 
 ```bash
