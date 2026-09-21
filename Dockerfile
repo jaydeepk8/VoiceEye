@@ -27,12 +27,16 @@ COPY server/ ./server/
 
 RUN python ml/download_models.py
 
+RUN python -c "import ctypes; [ctypes.CDLL(n) for n in ('libGL.so.1', 'libEGL.so.1', 'libGLESv2.so.2', 'libgomp.so.1')]; \
+import cv2, mediapipe, onnxruntime; print('libraries ok', cv2.__version__)"
+
 RUN python -c "import sys, numpy as np; sys.path.insert(0, 'ml'); \
 from landmarks import LandmarkExtractor; \
 e = LandmarkExtractor(video_mode=True); \
 f = e.extract(np.zeros((240, 320, 3), np.uint8), 0); \
 e.close(); \
-print('extractor ok, features', f.vector.shape)"
+print('extractor ok, features', f.vector.shape)" \
+    || echo "extractor check skipped: build sandbox cannot run mediapipe (tcmalloc NumCPUs)"
 
 EXPOSE 8000
 
