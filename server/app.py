@@ -43,6 +43,12 @@ def find_checkpoint() -> Path | None:
 # Consecutive undetected frames before we treat the signer as gone.
 LOST_AFTER = 10
 
+# A browser streams continuously, so a gap this long means it is gone. Render's
+# proxy does not always forward the close, and without this the handler blocks
+# in receive_bytes still holding the single-signer lock, locking everyone else
+# out for as long as the proxy keeps the upstream socket open.
+IDLE_TIMEOUT = 8.0
+
 logger = logging.getLogger("voiceeye")
 
 app = FastAPI(title="VoiceEye sign recognition")
@@ -136,7 +142,12 @@ async def sign_socket(socket: WebSocket) -> None:
 
         try:
             while True:
-                payload = await socket.receive_bytes()
+                try:
+                    payload = await asyncio.wait_for(
+                        socket.receive_bytes(), timeout=IDLE_TIMEOUT
+                    )
+                except asyncio.TimeoutError:
+                    break
                 frame = cv2.imdecode(np.frombuffer(payload, np.uint8), cv2.IMREAD_COLOR)
                 if frame is None:
                     continue
