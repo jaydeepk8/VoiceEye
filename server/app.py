@@ -63,6 +63,7 @@ _recogniser: SignRecogniser | None = None
 _extractor: LandmarkExtractor | None = None
 _clock = 0
 _in_use = asyncio.Lock()
+_current_stop: asyncio.Event | None = None
 
 
 def get_extractor() -> LandmarkExtractor:
@@ -114,14 +115,12 @@ async def sign_socket(socket: WebSocket) -> None:
         await socket.close()
         return
 
-    if _in_use.locked():
-        await socket.send_json(
-            {"type": "error", "message": "another signer is connected, try again shortly"}
-        )
-        await socket.close()
-        return
+    global _clock, _current_stop
 
-    global _clock
+    if _current_stop is not None:
+        _current_stop.set()
+    stop = asyncio.Event()
+    _current_stop = stop
 
     async with _in_use:
         try:
@@ -142,12 +141,21 @@ async def sign_socket(socket: WebSocket) -> None:
 
         try:
             while True:
-                try:
-                    payload = await asyncio.wait_for(
-                        socket.receive_bytes(), timeout=IDLE_TIMEOUT
-                    )
-                except asyncio.TimeoutError:
+                if stop.is_set():
                     break
+
+                receiving = asyncio.ensure_future(socket.receive_bytes())
+                halting = asyncio.ensure_future(stop.wait())
+                done, pending = await asyncio.wait(
+                    {receiving, halting},
+                    timeout=IDLE_TIMEOUT,
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                for task in pending:
+                    task.cancel()
+                if receiving not in done:
+                    break
+                payload = receiving.result()
                 frame = cv2.imdecode(np.frombuffer(payload, np.uint8), cv2.IMREAD_COLOR)
                 if frame is None:
                     continue
@@ -196,4 +204,6 @@ async def sign_socket(socket: WebSocket) -> None:
             except Exception:
                 pass
         finally:
+            if _current_stop is stop:
+                _current_stop = None
             _clock += 1000
