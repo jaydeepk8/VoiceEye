@@ -134,29 +134,57 @@ is for.
 
 ## Deploying
 
-The Python server cannot run on Netlify or Vercel. Both are serverless: no
-persistent WebSocket, and the dependency bundle is far past their limits. It
-needs an always-on container. CPU-only is fine - the GRU is 190k parameters and
-MediaPipe is built for CPU.
+Live at `voiceeye-server.onrender.com`; the front end reads the host from
+`VITE_SIGN_SERVER` at build time and needs a `wss://` scheme, because an
+`https://` page cannot open a plain `ws://` socket.
 
-The server runs ONNX, not torch. `ml/export_onnx.py` converts a checkpoint and
-verifies parity against the torch model before writing it. That keeps torch out
-of the image entirely, which is the difference between fitting a 512MB free
-tier and not.
+The Python server cannot run on Netlify or Vercel - both are serverless, with
+no persistent WebSocket - so it runs as a container on Render. `render.yaml`
+describes the service.
+
+### MediaPipe runs in the browser
+
+The first working version sent JPEG frames and did detection on the server. It
+worked and was unusable: 396ms per frame, 2.5fps, eighteen seconds to fill a
+45-frame window on a 0.1-CPU instance.
+
+Now the browser runs MediaPipe and sends landmarks. The server normalises them
+and runs the GRU, which is 190k parameters and takes about a millisecond.
+
+| | JPEG to server | landmarks to server |
+|---|---|---|
+| server time, 50 frames | 3.39s | 0.09s |
+| payload per frame | 10KB | 4.9KB |
+| deployed round trip | 396ms | 115ms |
+
+The browser sends **raw landmarks, not finished features**. Normalisation stays
+in `landmarks.py` where the training data was built, so there is no JavaScript
+reimplementation to drift out of step with the model. Verified across runtimes
+on one image: browser gave shoulder `0.6145, 0.4572, -0.1101`, Python gave
+`0.6148, 0.4572, -0.1113`, both MediaPipe 1.0.1.
+
+Two things worth knowing if you touch the browser side. MediaPipe defaults to
+the CPU delegate, which costs 365ms per frame against 97ms on GPU, so
+`Blind.jsx` asks for GPU and falls back to CPU. And the first GPU call spends
+about eighteen seconds compiling shaders, which a warm-up absorbs during model
+loading rather than in the middle of a sign.
+
+The server runs ONNX rather than torch. `ml/export_onnx.py` converts a
+checkpoint and checks parity against the torch model before writing it, which
+keeps torch out of the image entirely.
 
 ```
 python ml/export_onnx.py          # sign_gru.onnx + sign_gru.meta.json
-docker build -t voiceeye-server . # or push and let Render build it
+docker build -t voiceeye-server . # or let Render build it
 ```
 
-`render.yaml` describes the service. On Render, point a new Blueprint at this
-repo. The front end reads the server URL from `VITE_SIGN_SERVER` at build time,
-so set that in Netlify or Vercel to the deployed host with a `wss://` scheme -
-a `ws://` socket from an `https://` page is blocked by the browser.
+`SignRecogniser` picks its backend from the file extension, so `live.py` keeps
+using the `.pt` locally while the server uses the `.onnx`. Both agree to 3e-07.
 
-`SignRecogniser` loads either backend by file extension, so `live.py` keeps
-using the `.pt` locally while the server uses the `.onnx`. Both were checked
-against the same inputs and agree to 3e-07.
+Only one person signs at a time. A new connection takes over from the previous
+one, since two signers feeding one 45-frame window would interleave into
+nonsense. Render's proxy does not always forward a close, so an idle timeout
+releases sessions the proxy is still holding open.
 
 ## Tests
 
