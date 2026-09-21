@@ -1,19 +1,97 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import styled, { keyframes, css } from "styled-components";
+import {
+  FilesetResolver,
+  HandLandmarker,
+  PoseLandmarker,
+} from "@mediapipe/tasks-vision";
 import Header from "../Component/header/Header";
 
-// Sign to voice. The camera runs here, the recognition runs in the Python
-// service, and the browser speaks the result.
-//
-// Frames go out as JPEGs over a WebSocket rather than running a model in the
-// page: the pipeline is MediaPipe plus a GRU in Python, and keeping one
-// implementation means the thing tuned at the command line is the thing that
-// ships. At this size the bandwidth is unremarkable -- a 640px JPEG is around
-// 60KB, and we send twelve a second.
-
 const SERVER = import.meta.env.VITE_SIGN_SERVER ?? "ws://127.0.0.1:8000";
-const SEND_FPS = 12;
-const CAPTURE_WIDTH = 640; // must match ingest_include.py --width: features differ by scale
+const SEND_FPS = 15;
+const MIN_VISIBILITY = 0.5;
+const L_SHOULDER = 11;
+const R_SHOULDER = 12;
+
+const WASM_ROOT =
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
+const MODEL_ROOT = "https://storage.googleapis.com/mediapipe-models";
+const HAND_MODEL = `${MODEL_ROOT}/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`;
+const POSE_MODEL = `${MODEL_ROOT}/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`;
+
+async function buildFor(delegate) {
+  const fileset = await FilesetResolver.forVisionTasks(WASM_ROOT);
+  const [hands, pose] = await Promise.all([
+    HandLandmarker.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: HAND_MODEL, delegate },
+      runningMode: "VIDEO",
+      numHands: 2,
+    }),
+    PoseLandmarker.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: POSE_MODEL, delegate },
+      runningMode: "VIDEO",
+      numPoses: 1,
+    }),
+  ]);
+  return { hands, pose, delegate };
+}
+
+async function createLandmarkers() {
+  let kit;
+  try {
+    kit = await buildFor("GPU");
+  } catch {
+    kit = await buildFor("CPU");
+  }
+
+  const warm = document.createElement("canvas");
+  warm.width = 640;
+  warm.height = 480;
+  warm.getContext("2d").fillRect(0, 0, warm.width, warm.height);
+  try {
+    kit.pose.detectForVideo(warm, 1);
+    kit.hands.detectForVideo(warm, 1);
+  } catch {
+    /* first GPU call compiles shaders; failures surface on the real frames */
+  }
+  return kit;
+}
+
+const round = (value) => Math.round(value * 100000) / 100000;
+const toPoints = (marks) => marks.map((p) => [round(p.x), round(p.y), round(p.z)]);
+
+function buildPayload(video, hands, pose, timestamp) {
+  const poseResult = pose.detectForVideo(video, timestamp);
+  const handResult = hands.detectForVideo(video, timestamp);
+
+  const marks = poseResult.landmarks?.[0];
+  let posePoints = null;
+  if (marks?.length) {
+    const visible = (index) =>
+      marks[index].visibility === undefined ? 1 : marks[index].visibility;
+    if (
+      Math.min(visible(L_SHOULDER), visible(R_SHOULDER)) >= MIN_VISIBILITY
+    ) {
+      posePoints = toPoints(marks);
+    }
+  }
+
+  let left = null;
+  let right = null;
+  const handedness = handResult.handednesses ?? handResult.handedness ?? [];
+  (handResult.landmarks ?? []).forEach((marksForHand, index) => {
+    const label = handedness[index]?.[0]?.categoryName;
+    if (label === "Left") left = toPoints(marksForHand);
+    else right = toPoints(marksForHand);
+  });
+
+  return {
+    pose: posePoints,
+    left,
+    right,
+    aspect: video.videoWidth / video.videoHeight,
+  };
+}
 
 const Page = styled.div`
   min-height: 100vh;
@@ -100,8 +178,9 @@ function speak(word) {
 
 function Blind() {
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
   const socketRef = useRef(null);
+  const landmarkersRef = useRef(null);
+  const busyRef = useRef(false);
 
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState("idle");
@@ -112,6 +191,9 @@ function Blind() {
   const stop = useCallback(() => {
     socketRef.current?.close();
     socketRef.current = null;
+    landmarkersRef.current?.hands?.close();
+    landmarkersRef.current?.pose?.close();
+    landmarkersRef.current = null;
     const stream = videoRef.current?.srcObject;
     stream?.getTracks().forEach((track) => track.stop());
     if (videoRef.current) videoRef.current.srcObject = null;
@@ -132,8 +214,17 @@ function Blind() {
       return;
     }
 
+    if (!landmarkersRef.current) {
+      setStatus("loading landmark models...");
+      try {
+        landmarkersRef.current = await createLandmarkers();
+      } catch (err) {
+        setStatus(`could not load models: ${err.message}`);
+        return;
+      }
+    }
+
     const socket = new WebSocket(`${SERVER}/ws/sign`);
-    socket.binaryType = "arraybuffer";
     socketRef.current = socket;
 
     socket.onopen = () => {
@@ -172,27 +263,27 @@ function Blind() {
   useEffect(() => {
     if (!running) return undefined;
 
+    let stamp = 0;
     const timer = setInterval(() => {
       const socket = socketRef.current;
       const video = videoRef.current;
+      const kit = landmarkersRef.current;
       if (!socket || socket.readyState !== WebSocket.OPEN) return;
-      if (!video?.videoWidth) return;
-      // Don't queue frames the socket has not drained; a backlog would make
-      // the recognition lag behind the signer.
+      if (!video?.videoWidth || !kit) return;
       if (socket.bufferedAmount > 0) return;
 
-      const canvas = canvasRef.current;
-      const scale = CAPTURE_WIDTH / video.videoWidth;
-      canvas.width = CAPTURE_WIDTH;
-      canvas.height = Math.round(video.videoHeight * scale);
-      canvas
-        .getContext("2d")
-        .drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(
-        (blob) => blob?.arrayBuffer().then((buf) => socket.send(buf)),
-        "image/jpeg",
-        0.7,
-      );
+      stamp += Math.round(1000 / SEND_FPS);
+      if (busyRef.current) return;
+      busyRef.current = true;
+      try {
+        socket.send(
+          JSON.stringify(buildPayload(video, kit.hands, kit.pose, stamp)),
+        );
+      } catch (err) {
+        setStatus(`landmark error: ${err.message}`);
+      } finally {
+        busyRef.current = false;
+      }
     }, 1000 / SEND_FPS);
 
     return () => clearInterval(timer);
@@ -204,7 +295,6 @@ function Blind() {
       <Stage>
         <Video ref={videoRef} playsInline muted />
       </Stage>
-      <canvas ref={canvasRef} style={{ display: "none" }} />
 
       <Status $ok={connected} $busy={running && connected}>
         {status}
