@@ -6,7 +6,10 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libgl1 \
+        libegl1 \
+        libgles2 \
         libglib2.0-0 \
+        libgomp1 \
         libxcb1 \
         libsm6 \
         libxext6 \
@@ -24,7 +27,12 @@ COPY server/ ./server/
 
 RUN python ml/download_models.py
 
-RUN python -c "import cv2, mediapipe, onnxruntime; print('imports ok', cv2.__version__)"
+RUN python -c "import sys, numpy as np; sys.path.insert(0, 'ml'); \
+from landmarks import LandmarkExtractor; \
+e = LandmarkExtractor(video_mode=True); \
+f = e.extract(np.zeros((240, 320, 3), np.uint8), 0); \
+e.close(); \
+print('extractor ok, features', f.vector.shape)"
 
 EXPOSE 8000
 
