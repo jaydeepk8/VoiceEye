@@ -36,6 +36,10 @@ ml/models/*.task
 data/*.zip
 *.mp4
 
+# Reference clips shipped with the page are the exception: nine INCLUDE clips
+# at ~30KB each, rebuilt by ml/build_reference_clips.py.
+!public/signs/*.mp4
+
 # Extracted landmark features and the trained model ARE committed (~9MB).
 # They are derived from INCLUDE (CC-BY-4.0) and are what makes train.py
 # reproducible without a 2.7GB download.

@@ -1,0 +1,7 @@
+Reference clips are from the INCLUDE dataset, used under CC-BY-4.0.
+
+Advaith Sridhar, Rohith Gandhi Ganesan, Pratyush Kumar, Mitesh Khapra.
+INCLUDE: A Large Scale Dataset for Indian Sign Language Recognition.
+ACM Multimedia 2020. https://zenodo.org/records/4010759
+
+Clips are resized and shortened; no other modification.

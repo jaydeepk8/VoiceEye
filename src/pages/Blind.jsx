@@ -13,6 +13,20 @@ const MIN_VISIBILITY = 0.5;
 const L_SHOULDER = 11;
 const R_SHOULDER = 12;
 
+const KNOWN_WORDS = [
+  "hello",
+  "thank_you",
+  "how_are_you",
+  "pleased",
+  "alright",
+  "good_morning",
+  "good_afternoon",
+  "good_evening",
+  "good_night",
+];
+const RELIABLE = new Set(["hello", "thank_you", "how_are_you", "pleased"]);
+const pretty = (word) => word.replace(/_/g, " ");
+
 const WASM_ROOT =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
 const MODEL_ROOT = "https://storage.googleapis.com/mediapipe-models";
@@ -154,6 +168,52 @@ const History = styled.div`
   opacity: 0.55;
 `;
 
+const Reference = styled.div`
+  margin-top: 2.5rem;
+  width: min(720px, 90vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const RefVideo = styled.video`
+  width: 260px;
+  border-radius: 10px;
+  border: 1px solid #1e2f38;
+  background: #000;
+  display: ${({ $on }) => ($on ? "block" : "none")};
+  margin-bottom: 0.9rem;
+`;
+
+const Hint = styled.div`
+  font-size: 0.78rem;
+  font-weight: 200;
+  opacity: 0.5;
+  margin-bottom: 0.7rem;
+  text-align: center;
+`;
+
+const Words = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+`;
+
+const Word = styled.button`
+  padding: 0.35rem 0.75rem;
+  background: ${({ $active }) => ($active ? "#16323d" : "none")};
+  border: 1px solid ${({ $strong }) => ($strong ? "#3c6b58" : "#33414a")};
+  border-radius: 999px;
+  color: ${({ $strong }) => ($strong ? "#a9d9c0" : "#9fb0ba")};
+  font-size: 0.75rem;
+  font-weight: 200;
+  cursor: pointer;
+  &:hover {
+    border-color: #6d8794;
+  }
+`;
+
 const Button = styled.button`
   margin-top: 2rem;
   padding: 0.7rem 1.6rem;
@@ -187,6 +247,7 @@ function Blind() {
   const [connected, setConnected] = useState(false);
   const [word, setWord] = useState("");
   const [history, setHistory] = useState([]);
+  const [showing, setShowing] = useState(null);
 
   const stop = useCallback(() => {
     socketRef.current?.close();
@@ -306,6 +367,35 @@ function Blind() {
       <Button onClick={running ? stop : start}>
         {running ? "stop" : "start signing"}
       </Button>
+
+      <Reference>
+        <RefVideo
+          key={showing ?? "none"}
+          $on={Boolean(showing)}
+          src={showing ? `/signs/${showing}.mp4` : undefined}
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+        <Hint>
+          {showing
+            ? `${pretty(showing)} - copy this, then press start signing`
+            : "tap a word to see how it is signed"}
+        </Hint>
+        <Words>
+          {KNOWN_WORDS.map((item) => (
+            <Word
+              key={item}
+              $active={showing === item}
+              $strong={RELIABLE.has(item)}
+              onClick={() => setShowing(showing === item ? null : item)}
+            >
+              {pretty(item)}
+            </Word>
+          ))}
+        </Words>
+      </Reference>
     </Page>
   );
 }
