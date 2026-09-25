@@ -17,12 +17,12 @@ function Manus({ sign = null, onFinished }) {
 
   useEffect(() => {
     const idle = Object.values(actions).filter(Boolean);
-    if (sign) {
+    if (clip) {
       idle.forEach((action) => action.stop());
     } else {
       idle.forEach((action) => action.reset().play());
     }
-  }, [actions, sign]);
+  }, [actions, clip]);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,11 +45,7 @@ function Manus({ sign = null, onFinished }) {
   }, [sign]);
 
   useFrame((_, delta) => {
-    if (!rig) return;
-    if (!clip) {
-      if (!sign) restPose(rig, BLEND);
-      return;
-    }
+    if (!rig || !clip) return;
     elapsed.current += delta;
     const duration = clip.frameCount / clip.fps;
     if (elapsed.current >= duration) {
@@ -58,7 +54,7 @@ function Manus({ sign = null, onFinished }) {
       return;
     }
     applyPose(rig, frameAt(clip, elapsed.current), BLEND);
-  });
+  }, 1);
 
   return (
     <group ref={group} dispose={null}>
