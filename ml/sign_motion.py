@@ -87,6 +87,10 @@ def extract(path: Path, pose, hands, clock: int, max_width: int = 720):
                     [p.x, p.y, p.z] for p in pose_result.pose_world_landmarks[0]
                 ]
 
+            screen = None
+            if pose_result.pose_landmarks:
+                screen = [[p.x, p.y, p.z] for p in pose_result.pose_landmarks[0]]
+
             left = right = None
             handedness = hand_result.handedness or []
             for slot, marks in enumerate(hand_result.hand_world_landmarks or []):
@@ -97,7 +101,13 @@ def extract(path: Path, pose, hands, clock: int, max_width: int = 720):
                 else:
                     right = points
 
-            frames.append({"pose": body, "left": left, "right": right})
+            frames.append({
+                "pose": body,
+                "screen": screen,
+                "aspect": frame.shape[1] / frame.shape[0],
+                "left": left,
+                "right": right,
+            })
             index += 1
     finally:
         capture.release()

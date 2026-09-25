@@ -96,10 +96,41 @@ def smooth(series: list[list[float] | None], window: int = 7) -> list[list[float
     return out
 
 
-def arm_directions(pose: list[list[float]] | None) -> dict[str, list[float] | None]:
-    if not pose:
+def body_points(frame: dict) -> np.ndarray | None:
+    """Combine image-space X/Y with world Z into one body-relative frame.
+
+    MediaPipe's world landmarks badly understate how high an arm is raised --
+    on this clip the wrist peaks 2cm above the shoulder where the image says
+    17cm. Image-space X/Y is directly observed and matches the video; depth is
+    only available from the world estimate. Taking each from where it is
+    trustworthy, in shoulder-width units so the two agree on scale.
+    """
+    screen = frame.get("screen")
+    world = frame.get("pose")
+    if not screen or not world:
+        return None
+
+    flat = np.asarray(screen, dtype=np.float64)[:, :2].copy()
+    flat[:, 0] *= float(frame.get("aspect") or 1.0)
+    origin = (flat[L_SHOULDER] + flat[R_SHOULDER]) / 2.0
+    span = float(np.linalg.norm(flat[L_SHOULDER] - flat[R_SHOULDER]))
+    if span < 1e-6:
+        return None
+    flat = (flat - origin) / span
+
+    solid = np.asarray(world, dtype=np.float64)
+    depth_span = float(np.linalg.norm(solid[L_SHOULDER] - solid[R_SHOULDER]))
+    if depth_span < 1e-6:
+        return None
+    depth = (solid[:, 2] - solid[[L_SHOULDER, R_SHOULDER], 2].mean()) / depth_span
+
+    return np.column_stack([flat[:, 0], flat[:, 1], depth])
+
+
+def arm_directions(frame: dict) -> dict[str, list[float] | None]:
+    points = body_points(frame)
+    if points is None:
         return {name: None for name in ARM_CHAIN}
-    points = np.asarray(pose, dtype=np.float64)
     result = {}
     for bone, (start, end) in ARM_CHAIN.items():
         result[bone] = unit(to_three(points[end] - points[start]))
@@ -139,7 +170,7 @@ def build(word: str, source: Path, do_fingers: bool) -> dict:
 
     per_bone: dict[str, list[list[float] | None]] = {}
     for frame in frames:
-        row = arm_directions(frame.get("pose"))
+        row = arm_directions(frame)
         if do_fingers:
             row.update(hand_directions(frame.get("left"), "Right"))
             row.update(hand_directions(frame.get("right"), "Left"))
