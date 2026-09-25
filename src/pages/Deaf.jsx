@@ -63,6 +63,17 @@ const Stage = styled.div`
   inset: 0;
 `;
 
+const Debug = styled.div`
+  position: absolute;
+  top: 6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 200;
+  color: #7f95a1;
+  font-family: monospace;
+`;
+
 const Note = styled.div`
   position: absolute;
   bottom: 12rem;
@@ -146,6 +157,7 @@ function Deaf() {
   const [typed, setTyped] = useState("");
   const [queue, setQueue] = useState([]);
   const [note, setNote] = useState("");
+  const [debug, setDebug] = useState("");
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
 
   useEffect(() => {
@@ -186,12 +198,13 @@ function Deaf() {
           <ambientLight intensity={1.6} />
           <directionalLight position={[2, 4, 3]} intensity={1.4} />
           <Suspense fallback={null}>
-            <Manus sign={queue[0] ?? null} onFinished={playNext} />
+            <Manus sign={queue[0] ?? null} onFinished={playNext} onDebug={setDebug} />
           </Suspense>
           <OrbitControls enablePan={false} target={[0, 0.1, 0]} />
         </Canvas>
       </Stage>
       {note && <Note>{note}</Note>}
+      {debug && <Debug>{debug}</Debug>}
 
       <InputContainer>
         <Input

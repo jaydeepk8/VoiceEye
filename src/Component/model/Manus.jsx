@@ -6,7 +6,7 @@ import { applyPose, buildRig, frameAt, restPose } from "./signRig";
 const MODEL = "/aniavatar.glb";
 const BLEND = 0.35;
 
-function Manus({ sign = null, onFinished }) {
+function Manus({ sign = null, onFinished, onDebug }) {
   const group = useRef();
   const { scene, animations } = useGLTF(MODEL);
   const { actions } = useAnimations(animations, group);
@@ -14,6 +14,12 @@ function Manus({ sign = null, onFinished }) {
   const elapsed = useRef(0);
 
   const rig = useMemo(() => buildRig(scene), [scene]);
+  const ticks = useRef(0);
+
+  useEffect(() => {
+    if (!onDebug) return;
+    onDebug(`rig=${rig ? rig.size : "null"} bones`);
+  }, [rig, onDebug]);
 
   useEffect(() => {
     const idle = Object.values(actions).filter(Boolean);
@@ -34,10 +40,20 @@ function Manus({ sign = null, onFinished }) {
     fetch(`/signs/${sign}.motion.json`)
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
-        if (!cancelled) setClip(data);
+        if (cancelled) return;
+        if (onDebug) {
+          onDebug(
+            data
+              ? `loaded ${data.word}: ${data.frameCount} frames, ${Object.keys(data.bones || {}).length} bones`
+              : `fetch of /signs/${sign}.motion.json returned nothing`,
+          );
+        }
+        setClip(data);
       })
-      .catch(() => {
-        if (!cancelled) setClip(null);
+      .catch((err) => {
+        if (cancelled) return;
+        if (onDebug) onDebug(`fetch failed: ${err.message}`);
+        setClip(null);
       });
     return () => {
       cancelled = true;
@@ -45,6 +61,13 @@ function Manus({ sign = null, onFinished }) {
   }, [sign]);
 
   useFrame((_, delta) => {
+    ticks.current += 1;
+    if (onDebug && ticks.current % 30 === 0) {
+      onDebug(
+        `rig=${rig ? rig.size : "null"} clip=${clip ? clip.word : "none"} ` +
+        `frames=${clip ? clip.frameCount : 0} t=${elapsed.current.toFixed(1)}s ticks=${ticks.current}`,
+      );
+    }
     if (!rig || !clip) return;
     elapsed.current += delta;
     const duration = clip.frameCount / clip.fps;
