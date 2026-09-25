@@ -122,15 +122,87 @@ evening, morning and night formed a confusion chain. They share a "good"
 component and the model cannot separate what follows it. Five-word accuracy is
 high partly because that family is not in it.
 
-**Caveat on the sessions.** INCLUDE ships no signer field. The groups come from
-clustering the source filenames' camera numbering - see `label_sessions.py`.
-Eight of nine words fall into five clean groups; `good_evening` splits into six
-and is forced to five. The numbering is not globally unique either: in the
-second archive, *good evening* and *good night* share numbers 1-5. So a session
-is a recording source, not provably a person. Holding one out is still strictly
-harder than a random split, so treat these as a floor. A real signer-independent
-number needs clips from someone outside the dataset - that is what `record.py`
-is for.
+**Caveat on the sessions.** INCLUDE ships no signer field. The groups come from clustering the source filenames' camera numbering - see `label_sessions.py`. Eight of nine words fall into five clean groups; `good_evening` splits into six and is forced to five. The numbering is not globally unique either: in the second archive, *good evening* and *good night* share numbers 1-5. So a session is a recording source, not provably a person, and every figure above is a floor rather than a signer-independent result. Closing that gap needs clips from someone outside the dataset - see **Recording your own clips**.
+
+## Making the avatar sign
+
+`/Deaf` takes speech or typed text, finds known signs in it, and has a 3D
+avatar perform them. Nobody hand-animated those signs: the motion is lifted
+from the same INCLUDE recordings the recogniser was trained on, so both halves
+of the bridge share one vocabulary.
+
+```
+python ml/sign_motion.py      # landmarks from the source clips
+python ml/retarget.py         # -> public/signs/<word>.motion.json
+```
+
+The browser gets bone *directions* rather than quaternions. It already has the
+skeleton with its bind pose and parent transforms, so turning a direction into
+a local rotation is a few lines there and a reimplementation of three.js here.
+Directions are also readable: a wrong one is a number you can look at.
+
+### What went wrong, since none of it was obvious
+
+**MediaPipe's world landmarks understate elevation.** They put the wrist 2cm
+above the shoulder where the video plainly shows 17cm. Image-space landmarks
+are directly observed and match the video, so X and Y come from there. Depth
+comes from foreshortening instead: a limb of known length appearing shorter
+than it is has gone away from the camera, and how much shorter says how far.
+
+**Hand landmarks use different axes from body landmarks.** The same finger
+measured both ways disagreed by 103-118 degrees. Hands are now built from
+image-space points in the body's own frame, like everything else.
+
+**MediaPipe's Left/Right hand labels are mirrored for this footage.** Each
+detected hand is now given to whichever pose wrist it actually sits next to,
+which is geometry rather than convention.
+
+**A direction alone does not pin a bone's twist.** The elbow could hinge in any
+plane and the palm could face anywhere, which is what made early attempts look
+broken rather than merely inaccurate. The shoulder-elbow-wrist plane now fixes
+the arm's roll and the knuckle line fixes the hand's.
+
+### Checking it
+
+Guessing at 3D from the outside does not work; these make it visible.
+
+```
+node tools/snap.mjs http://localhost:5173 hello 0.3,0.9,1.5 out    # render frozen frames
+python tools/source_frames.py hello 0.3,0.9,1.5 out                # same moments from the video
+python tools/montage.py out 0.3,0.9,1.5 compare.png                # side by side
+node tools/rigcheck.mjs public/aniavatar.glb public/signs/hello.motion.json 0.9
+```
+
+`rigcheck` loads the real skeleton and measures the angle between where each
+bone ended up and where the clip asked it to be. All nine signs across seven
+moments land within 0.0 degrees. Add `?debug=1` to `/Deaf` for a live readout.
+
+## Recording your own clips
+
+Every clip in `data/raw` comes from INCLUDE, with a signer label inferred from
+camera numbering in the filenames. Holding one of those out is harder than a
+random split, but it is a recording source, not a person anyone can name. Until
+somebody outside the dataset signs at it, the accuracy figures are a floor.
+
+The avatar solves the problem that used to block this: you no longer need to
+already know the signs. Watch one at `/Deaf`, copy it, record it.
+
+```
+python ml/record_session.py --signer <your-name>
+python ml/evaluate.py --signer <your-name>
+```
+
+`record_session.py` walks the whole vocabulary, eight clips each by default.
+SPACE records, R redoes the last one, Q moves to the next word. It refuses to
+record when your shoulders are not visible, because the features are normalised
+against shoulder width and there is nothing to normalise against otherwise.
+
+Worth varying deliberately: where you stand, the lighting, what you are
+wearing, which day it is. Eight identical clips teach it less than eight
+different ones.
+
+`evaluate.py` then trains on everything else and tests only on you, printing
+per-word accuracy and a confusion matrix. That number is the honest one.
 
 ## Deploying
 
