@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { useGLTF, useAnimations } from "@react-three/drei";
 
-const MODEL = "/wireframe.glb";
+const MODEL = "/aniavatar.glb";
 
 function Manus({ playing = true }) {
   const group = useRef();
