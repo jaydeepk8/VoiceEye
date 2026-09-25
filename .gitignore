@@ -39,3 +39,6 @@ data/*.zip
 # Extracted landmark features and the trained model ARE committed (~9MB).
 # They are derived from INCLUDE (CC-BY-4.0) and are what makes train.py
 # reproducible without a 2.7GB download.
+
+# Retargeted sign motion shipped with the page (~40KB each).
+!public/signs/*.motion.json

@@ -1,5 +1,5 @@
 import "regenerator-runtime/runtime";
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -9,6 +9,43 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 
 import Manus from "../Component/model/Manus";
+
+const KNOWN = [
+  "good_morning",
+  "good_afternoon",
+  "good_evening",
+  "good_night",
+  "how_are_you",
+  "thank_you",
+  "hello",
+  "alright",
+  "pleased",
+];
+
+function parseSigns(text) {
+  const clean = ` ${String(text).toLowerCase().replace(/[^a-z]+/g, " ").trim()} `;
+  const hits = [];
+  KNOWN.forEach((word) => {
+    const phrase = ` ${word.replace(/_/g, " ")} `;
+    let from = 0;
+    for (;;) {
+      const at = clean.indexOf(phrase, from);
+      if (at === -1) break;
+      hits.push({ at, word, len: phrase.length });
+      from = at + 1;
+    }
+  });
+  hits.sort((a, b) => a.at - b.at || b.len - a.len);
+  const chosen = [];
+  let reached = -1;
+  hits.forEach((hit) => {
+    if (hit.at >= reached) {
+      chosen.push(hit.word);
+      reached = hit.at + hit.len - 1;
+    }
+  });
+  return chosen;
+}
 
 const StyledDeaf = styled.div`
   position: relative;
@@ -24,6 +61,17 @@ const StyledDeaf = styled.div`
 const Stage = styled.div`
   position: absolute;
   inset: 0;
+`;
+
+const Note = styled.div`
+  position: absolute;
+  bottom: 12rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  font-weight: 200;
+  color: #8fb7a4;
+  letter-spacing: 0.04em;
 `;
 
 const InputContainer = styled.div`
@@ -95,7 +143,18 @@ const Button = styled.button`
 
 function Deaf() {
   const [isListening, setIsListening] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [queue, setQueue] = useState([]);
+  const [note, setNote] = useState("");
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
+
+  useEffect(() => {
+    if (transcript) setTyped(transcript);
+  }, [transcript]);
+
+  const playNext = useCallback(() => {
+    setQueue((rest) => rest.slice(1));
+  }, []);
 
   const handleVoiceButtonClick = () => {
     if (listening) {
@@ -108,7 +167,13 @@ function Deaf() {
   };
 
   const handleSubmitButtonClick = () => {
-    // Handle submit button click here
+    const found = parseSigns(typed);
+    if (!found.length) {
+      setNote(`no known sign in that - try: ${KNOWN.slice(0, 4).map((w) => w.replace(/_/g, " ")).join(", ")}`);
+      return;
+    }
+    setNote(found.map((w) => w.replace(/_/g, " ")).join("  ->  "));
+    setQueue(found);
   };
 
   return (
@@ -121,16 +186,21 @@ function Deaf() {
           <ambientLight intensity={1.6} />
           <directionalLight position={[2, 4, 3]} intensity={1.4} />
           <Suspense fallback={null}>
-            <Manus />
+            <Manus sign={queue[0] ?? null} onFinished={playNext} />
           </Suspense>
           <OrbitControls enablePan={false} target={[0, 0.1, 0]} />
         </Canvas>
       </Stage>
+      {note && <Note>{note}</Note>}
+
       <InputContainer>
         <Input
           placeholder="Convert Voice to ISL..."
-          value={transcript}
-          readOnly
+          value={typed}
+          onChange={(event) => setTyped(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") handleSubmitButtonClick();
+          }}
         />
         <Button onClick={handleSubmitButtonClick}>
           <svg

@@ -1,0 +1,167 @@
+"""Turn extracted sign motion into bone directions the avatar can follow.
+
+    python ml/retarget.py --words hello
+
+Reads data/motion/<word>.json and writes public/signs/<word>.motion.json.
+
+Emits direction vectors per bone rather than quaternions. The browser has the
+live skeleton with its bind pose and parent transforms, so turning a direction
+into a local rotation is a few lines there and a reimplementation of three.js
+here. Directions are also inspectable: a wrong one is visible as a number.
+
+Axes are converted from MediaPipe world space (Y down, metres, origin at the
+hips) to the three.js convention of Y up.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parent.parent
+IN_DIR = ROOT / "data" / "motion"
+OUT_DIR = ROOT / "public" / "signs"
+
+L_SHOULDER, R_SHOULDER = 11, 12
+L_ELBOW, R_ELBOW = 13, 14
+L_WRIST, R_WRIST = 15, 16
+
+ARM_CHAIN = {
+    "LeftArm": (L_SHOULDER, L_ELBOW),
+    "LeftForeArm": (L_ELBOW, L_WRIST),
+    "RightArm": (R_SHOULDER, R_ELBOW),
+    "RightForeArm": (R_ELBOW, R_WRIST),
+}
+
+FINGERS = {
+    "Thumb": (1, 2, 3, 4),
+    "Index": (5, 6, 7, 8),
+    "Middle": (9, 10, 11, 12),
+    "Ring": (13, 14, 15, 16),
+    "Pinky": (17, 18, 19, 20),
+}
+
+
+def to_three(vector: np.ndarray) -> np.ndarray:
+    out = np.asarray(vector, dtype=np.float64).copy()
+    out[1] *= -1.0
+    out[2] *= -1.0
+    return out
+
+
+def unit(vector: np.ndarray) -> list[float] | None:
+    length = float(np.linalg.norm(vector))
+    if length < 1e-6:
+        return None
+    return [round(float(v), 4) for v in (vector / length)]
+
+
+def smooth(series: list[list[float] | None], window: int = 5) -> list[list[float] | None]:
+    known = [i for i, v in enumerate(series) if v is not None]
+    if not known:
+        return series
+    out: list[list[float] | None] = list(series)
+    half = window // 2
+    for i in known:
+        near = [series[j] for j in range(max(0, i - half), min(len(series), i + half + 1))
+                if series[j] is not None]
+        if not near:
+            continue
+        mean = np.mean(np.asarray(near, dtype=np.float64), axis=0)
+        out[i] = unit(mean) or series[i]
+    return out
+
+
+def arm_directions(pose: list[list[float]] | None) -> dict[str, list[float] | None]:
+    if not pose:
+        return {name: None for name in ARM_CHAIN}
+    points = np.asarray(pose, dtype=np.float64)
+    result = {}
+    for bone, (start, end) in ARM_CHAIN.items():
+        result[bone] = unit(to_three(points[end] - points[start]))
+    return result
+
+
+def hand_directions(hand: list[list[float]] | None, side: str) -> dict[str, list[float] | None]:
+    result: dict[str, list[float] | None] = {}
+    if not hand:
+        for finger, joints in FINGERS.items():
+            for n in range(len(joints) - 1):
+                result[f"{side}Hand{finger}{n + 1}"] = None
+        result[f"{side}Hand"] = None
+        return result
+
+    points = np.asarray(hand, dtype=np.float64)
+    result[f"{side}Hand"] = unit(to_three(points[9] - points[0]))
+    for finger, joints in FINGERS.items():
+        for n in range(len(joints) - 1):
+            a, b = joints[n], joints[n + 1]
+            result[f"{side}Hand{finger}{n + 1}"] = unit(to_three(points[b] - points[a]))
+    return result
+
+
+def build(word: str, source: Path, do_fingers: bool) -> dict:
+    data = json.loads(source.read_text(encoding="utf-8"))
+    frames = data["frames"]
+
+    per_bone: dict[str, list[list[float] | None]] = {}
+    for frame in frames:
+        row = arm_directions(frame.get("pose"))
+        if do_fingers:
+            row.update(hand_directions(frame.get("left"), "Left"))
+            row.update(hand_directions(frame.get("right"), "Right"))
+        for bone, value in row.items():
+            per_bone.setdefault(bone, []).append(value)
+
+    for bone in per_bone:
+        per_bone[bone] = smooth(per_bone[bone])
+
+    tracked = {b: sum(1 for v in per_bone[b] if v is not None) for b in per_bone}
+    return {
+        "word": word,
+        "fps": data.get("fps", 25),
+        "frameCount": len(frames),
+        "bones": per_bone,
+        "tracked": tracked,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--words", help="comma separated; default all extracted")
+    parser.add_argument("--no-fingers", action="store_true")
+    args = parser.parse_args()
+
+    wanted = (
+        {w.strip().lower().replace(" ", "_") for w in args.words.split(",")}
+        if args.words else None
+    )
+    sources = sorted(IN_DIR.glob("*.json"))
+    if not sources:
+        print(f"no motion files in {IN_DIR}; run ml/sign_motion.py first")
+        return 1
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    written = 0
+    for source in sources:
+        word = source.stem
+        if wanted and word not in wanted:
+            continue
+        clip = build(word, source, not args.no_fingers)
+        target = OUT_DIR / f"{word}.motion.json"
+        target.write_text(json.dumps(clip), encoding="utf-8")
+        arms = {b: c for b, c in clip["tracked"].items() if "Arm" in b}
+        print(f"  {word:16s} {clip['frameCount']:3d} frames  "
+              f"{len(clip['bones'])} bones  {target.stat().st_size/1024:.0f} KB")
+        print(f"  {'':16s} arms tracked: {arms}")
+        written += 1
+
+    print(f"\nwrote {written} clip(s) to {OUT_DIR}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
