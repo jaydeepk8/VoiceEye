@@ -13,6 +13,8 @@ const MIN_VISIBILITY = 0.5;
 const L_SHOULDER = 11;
 const R_SHOULDER = 12;
 
+const pretty = (label) => label.replace(/_/g, " ");
+
 const WASM_ROOT =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
 const MODEL_ROOT = "https://storage.googleapis.com/mediapipe-models";
@@ -239,16 +241,17 @@ function Blind() {
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === "sign") {
-        setWord(message.word);
-        setHistory((past) => [message.word, ...past].slice(0, 8));
-        speak(message.word);
+        const spoken = pretty(message.word);
+        setWord(spoken);
+        setHistory((past) => [spoken, ...past].slice(0, 8));
+        speak(spoken);
       } else if (message.type === "status") {
         setStatus(
           !message.framed
             ? "step back - head, shoulders and hands must be visible"
             : message.warming
               ? "reading..."
-              : `${message.top} ${message.confidence}`,
+              : `${pretty(message.top)} ${message.confidence}`,
         );
       } else if (message.type === "error") {
         setStatus(message.message);
