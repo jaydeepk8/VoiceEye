@@ -1,5 +1,5 @@
 import "regenerator-runtime/runtime";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -11,6 +11,7 @@ import { OrbitControls } from "@react-three/drei";
 import Manus from "../Component/model/Manus";
 
 const StyledDeaf = styled.div`
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -18,6 +19,11 @@ const StyledDeaf = styled.div`
   background-color: #040d11;
   align-items: center;
   justify-content: center;
+`;
+
+const Stage = styled.div`
+  position: absolute;
+  inset: 0;
 `;
 
 const InputContainer = styled.div`
@@ -109,11 +115,17 @@ function Deaf() {
     <StyledDeaf>
       <Header />
 
-      <Canvas gl={{ alpha: false }}>
-        <ambientLight intensity={2} />
-        <OrbitControls />
-        <Manus />
-      </Canvas>
+      <Stage>
+        <Canvas camera={{ position: [0, 0.2, 3.2], fov: 42 }}>
+          <color attach="background" args={["#040d11"]} />
+          <ambientLight intensity={1.6} />
+          <directionalLight position={[2, 4, 3]} intensity={1.4} />
+          <Suspense fallback={null}>
+            <Manus />
+          </Suspense>
+          <OrbitControls enablePan={false} target={[0, 0.1, 0]} />
+        </Canvas>
+      </Stage>
       <InputContainer>
         <Input
           placeholder="Convert Voice to ISL..."
