@@ -134,6 +134,22 @@ def arm_directions(frame: dict) -> dict[str, list[float] | None]:
     result = {}
     for bone, (start, end) in ARM_CHAIN.items():
         result[bone] = unit(to_three(points[end] - points[start]))
+
+    # The elbow hinges in the plane through shoulder, elbow and wrist. Without
+    # pinning the upper arm's twist to that plane the forearm bends sideways,
+    # which is what makes the pose look broken rather than merely wrong.
+    for side, (sh, el, wr) in (
+        ("Left", (L_SHOULDER, L_ELBOW, L_WRIST)),
+        ("Right", (R_SHOULDER, R_ELBOW, R_WRIST)),
+    ):
+        upper = to_three(points[el] - points[sh])
+        lower = to_three(points[wr] - points[el])
+        normal = np.cross(upper, lower)
+        if np.linalg.norm(normal) > 1e-5:
+            axis = unit(normal)
+            if axis:
+                result[f"{side}Arm_up"] = axis
+                result[f"{side}ForeArm_up"] = axis
     return result
 
 

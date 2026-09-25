@@ -46,11 +46,9 @@ export function buildRig(scene) {
     const bindWorldQuat = new Quaternion();
     bone.getWorldQuaternion(bindWorldQuat);
 
-    let restUp = null;
-    if (name.endsWith("Hand")) {
-      const inv = bindWorldQuat.clone().invert();
-      restUp = new Vector3(0, 0, 1).applyQuaternion(inv);
-    }
+    const restUp = new Vector3(0, 0, 1).applyQuaternion(
+      bindWorldQuat.clone().invert(),
+    );
 
     rig.set(name, {
       bone,
