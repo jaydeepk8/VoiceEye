@@ -21,6 +21,51 @@ OUT = ROOT / "src" / "Component" / "model" / "neutralPose.json"
 EDGE = 3
 
 
+CURL = {
+    "Index": (14, 36, 50),
+    "Middle": (17, 42, 58),
+    "Ring": (20, 48, 65),
+    "Pinky": (24, 54, 72),
+}
+SPLAY = {"Index": 0.06, "Middle": 0.0, "Ring": -0.05, "Pinky": -0.11}
+
+
+def unit(vector: np.ndarray) -> np.ndarray:
+    return vector / np.linalg.norm(vector)
+
+
+def relaxed_hand(side: str, forearm: np.ndarray) -> dict[str, np.ndarray]:
+    """A hanging hand at rest, built rather than measured.
+
+    Hands resting by the thighs are where the detector does worst -- small,
+    half hidden, low confidence -- and the median of those detections came out
+    as a slight claw. The wrist here continues the forearm, the palm faces the
+    thigh, and the fingers curl in the cascade real relaxed hands show, index
+    least and pinky most.
+    """
+    forward = unit(forearm + np.array([0.0, -0.35, 0.0]))
+    toward_middle = np.array([1.0, 0.0, 0.0]) if side == "Right" else np.array([-1.0, 0.0, 0.0])
+    palm = unit(toward_middle - (toward_middle @ forward) * forward)
+    back_to_front = unit(np.cross(forward, palm)) if side == "Right" else unit(np.cross(palm, forward))
+    across = -back_to_front
+    up = unit(np.cross(forward, across))
+
+    out: dict[str, np.ndarray] = {f"{side}Hand": forward, f"{side}Hand_up": up}
+    for finger, angles in CURL.items():
+        splay = SPLAY[finger] * back_to_front
+        for n, degrees in enumerate(angles, start=1):
+            theta = np.radians(degrees)
+            out[f"{side}Hand{finger}{n}"] = unit(
+                np.cos(theta) * forward + np.sin(theta) * palm + splay
+            )
+
+    thumb_base = unit(0.75 * forward + 0.45 * back_to_front + 0.35 * palm)
+    for n, degrees in enumerate((0, 18, 32), start=1):
+        theta = np.radians(degrees)
+        out[f"{side}HandThumb{n}"] = unit(np.cos(theta) * thumb_base + np.sin(theta) * palm)
+    return out
+
+
 def main() -> int:
     clips = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(SIGNS.glob("*.motion.json"))]
     if not clips:
@@ -42,10 +87,10 @@ def main() -> int:
             pose[bone] = middle / length
 
     for side in ("Left", "Right"):
-        forward, up = pose.get(f"{side}Hand"), pose.get(f"{side}Hand_up")
-        if forward is not None and up is not None:
-            up = up - (up @ forward) * forward
-            pose[f"{side}Hand_up"] = up / np.linalg.norm(up)
+        forearm = pose.get(f"{side}ForeArm")
+        if forearm is None:
+            continue
+        pose.update(relaxed_hand(side, forearm))
 
     rounded = {b: [round(float(x), 4) for x in v] for b, v in pose.items()}
     OUT.write_text(json.dumps(rounded, indent=1), encoding="utf-8")

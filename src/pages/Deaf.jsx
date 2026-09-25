@@ -1,5 +1,5 @@
 import "regenerator-runtime/runtime";
-import React, { Suspense, useCallback, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -166,9 +166,17 @@ function Deaf() {
 
   const [freezeAt, setFreezeAt] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
+  const faceCam = useMemo(
+    () => new URLSearchParams(window.location.search).get("cam") === "face",
+    [],
+  );
+  const [forceGaze, setForceGaze] = useState(null);
+  const [forceBlink, setForceBlink] = useState(null);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setShowDebug(params.get("debug") === "1");
+    if (params.get("gaze")) setForceGaze(params.get("gaze").split(",").map(Number));
+    if (params.get("blink") !== null) setForceBlink(Number(params.get("blink")));
     const fixed = params.get("sign");
     const at = params.get("t");
     if (fixed) {
@@ -206,14 +214,14 @@ function Deaf() {
       <Header />
 
       <Stage>
-        <Canvas camera={{ position: [0, 0.2, 3.2], fov: 42 }}>
+        <Canvas camera={faceCam ? { position: [0, 0.31, 0.62], fov: 26 } : { position: [0, 0.2, 3.2], fov: 42 }}>
           <color attach="background" args={["#040d11"]} />
           <ambientLight intensity={1.6} />
           <directionalLight position={[2, 4, 3]} intensity={1.4} />
           <Suspense fallback={null}>
-            <Manus sign={queue[0] ?? null} onFinished={playNext} onDebug={setDebug} freezeAt={freezeAt} />
+            <Manus sign={queue[0] ?? null} onFinished={playNext} onDebug={setDebug} freezeAt={freezeAt} forceGaze={forceGaze} forceBlink={forceBlink} />
           </Suspense>
-          <OrbitControls enablePan={false} target={[0, 0.1, 0]} />
+          <OrbitControls enablePan={false} target={faceCam ? [0, 0.3, 0] : [0, 0.1, 0]} />
         </Canvas>
       </Stage>
       {note && <Note>{note}</Note>}
