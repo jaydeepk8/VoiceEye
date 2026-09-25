@@ -46,10 +46,17 @@ export function buildRig(scene) {
     const bindWorldQuat = new Quaternion();
     bone.getWorldQuaternion(bindWorldQuat);
 
+    let restUp = null;
+    if (name.endsWith("Hand")) {
+      const inv = bindWorldQuat.clone().invert();
+      restUp = new Vector3(0, 0, 1).applyQuaternion(inv);
+    }
+
     rig.set(name, {
       bone,
       restDir,
       bindWorldQuat,
+      restUp,
       restLocalQuat: bone.quaternion.clone(),
     });
   }
@@ -59,7 +66,10 @@ export function buildRig(scene) {
 const rotation = new Quaternion();
 const parentQuat = new Quaternion();
 const targetWorld = new Quaternion();
+const roll = new Quaternion();
 const targetDir = new Vector3();
+const bindUp = new Vector3();
+const wantUp = new Vector3();
 
 export function applyPose(rig, pose, weight = 1) {
   if (!rig) return;
@@ -75,6 +85,18 @@ export function applyPose(rig, pose, weight = 1) {
 
     rotation.setFromUnitVectors(entry.restDir, targetDir);
     targetWorld.copy(rotation).multiply(entry.bindWorldQuat);
+
+    const up = pose[`${name}_up`];
+    if (up && entry.restUp) {
+      bindUp.copy(entry.restUp).applyQuaternion(targetWorld);
+      wantUp.set(up[0], up[1], up[2]);
+      wantUp.addScaledVector(targetDir, -wantUp.dot(targetDir)).normalize();
+      bindUp.addScaledVector(targetDir, -bindUp.dot(targetDir)).normalize();
+      if (bindUp.lengthSq() > 1e-8 && wantUp.lengthSq() > 1e-8) {
+        roll.setFromUnitVectors(bindUp, wantUp);
+        targetWorld.premultiply(roll);
+      }
+    }
 
     if (entry.bone.parent) {
       entry.bone.parent.getWorldQuaternion(parentQuat);

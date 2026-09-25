@@ -28,6 +28,7 @@ OUT_DIR = ROOT / "public" / "signs"
 L_SHOULDER, R_SHOULDER = 11, 12
 L_ELBOW, R_ELBOW = 13, 14
 L_WRIST, R_WRIST = 15, 16
+MIN_HAND_COVERAGE = 0.7
 
 ARM_CHAIN = {
     "LeftArm": (L_SHOULDER, L_ELBOW),
@@ -59,7 +60,27 @@ def unit(vector: np.ndarray) -> list[float] | None:
     return [round(float(v), 4) for v in (vector / length)]
 
 
-def smooth(series: list[list[float] | None], window: int = 5) -> list[list[float] | None]:
+def fill_gaps(series: list[list[float] | None], limit: int = 4) -> list[list[float] | None]:
+    """Hold the last value across short dropouts.
+
+    A hand that vanishes for two frames and reappears would otherwise snap to
+    rest and back, which reads as a flinch rather than a sign.
+    """
+    out = list(series)
+    last = None
+    gap = 0
+    for i, value in enumerate(out):
+        if value is not None:
+            last, gap = value, 0
+        elif last is not None and gap < limit:
+            out[i] = last
+            gap += 1
+        else:
+            last = None
+    return out
+
+
+def smooth(series: list[list[float] | None], window: int = 7) -> list[list[float] | None]:
     known = [i for i, v in enumerate(series) if v is not None]
     if not known:
         return series
@@ -95,7 +116,16 @@ def hand_directions(hand: list[list[float]] | None, side: str) -> dict[str, list
         return result
 
     points = np.asarray(hand, dtype=np.float64)
-    result[f"{side}Hand"] = unit(to_three(points[9] - points[0]))
+
+    # A direction alone leaves the bone free to spin about its own axis, so the
+    # palm can end up facing anywhere. Sending a second axis across the
+    # knuckles pins the roll, which is what makes a handshape readable.
+    forward = to_three(points[9] - points[0])
+    across = to_three(points[17] - points[5])
+    normal = np.cross(forward, across)
+    result[f"{side}Hand"] = unit(forward)
+    if np.linalg.norm(normal) > 1e-6 and result[f"{side}Hand"]:
+        result[f"{side}Hand_up"] = unit(normal)
     for finger, joints in FINGERS.items():
         for n in range(len(joints) - 1):
             a, b = joints[n], joints[n + 1]
@@ -111,13 +141,26 @@ def build(word: str, source: Path, do_fingers: bool) -> dict:
     for frame in frames:
         row = arm_directions(frame.get("pose"))
         if do_fingers:
-            row.update(hand_directions(frame.get("left"), "Left"))
-            row.update(hand_directions(frame.get("right"), "Right"))
+            row.update(hand_directions(frame.get("left"), "Right"))
+            row.update(hand_directions(frame.get("right"), "Left"))
         for bone, value in row.items():
             per_bone.setdefault(bone, []).append(value)
 
+    total = len(frames)
+    for side in ("Left", "Right"):
+        hand_bones = [b for b in per_bone if b.startswith(f"{side}Hand")]
+        if not hand_bones:
+            continue
+        seen = sum(1 for v in per_bone[f"{side}Hand"] if v is not None)
+        if seen < total * MIN_HAND_COVERAGE:
+            # A hand tracked in only part of the clip is the resting one caught
+            # in glimpses. Its direction jumps between real and noise, which
+            # looks like a spasm; leaving it at rest is both calmer and truer.
+            for bone in hand_bones:
+                per_bone[bone] = [None] * total
+
     for bone in per_bone:
-        per_bone[bone] = smooth(per_bone[bone])
+        per_bone[bone] = smooth(fill_gaps(per_bone[bone]))
 
     tracked = {b: sum(1 for v in per_bone[b] if v is not None) for b in per_bone}
     return {
