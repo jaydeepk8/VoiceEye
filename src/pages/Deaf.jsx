@@ -164,6 +164,19 @@ function Deaf() {
     if (transcript) setTyped(transcript);
   }, [transcript]);
 
+  const [freezeAt, setFreezeAt] = useState(null);
+  const [showDebug, setShowDebug] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setShowDebug(params.get("debug") === "1");
+    const fixed = params.get("sign");
+    const at = params.get("t");
+    if (fixed) {
+      setQueue([fixed]);
+      if (at !== null) setFreezeAt(Number(at));
+    }
+  }, []);
+
   const playNext = useCallback(() => {
     setQueue((rest) => rest.slice(1));
   }, []);
@@ -198,13 +211,13 @@ function Deaf() {
           <ambientLight intensity={1.6} />
           <directionalLight position={[2, 4, 3]} intensity={1.4} />
           <Suspense fallback={null}>
-            <Manus sign={queue[0] ?? null} onFinished={playNext} onDebug={setDebug} />
+            <Manus sign={queue[0] ?? null} onFinished={playNext} onDebug={setDebug} freezeAt={freezeAt} />
           </Suspense>
           <OrbitControls enablePan={false} target={[0, 0.1, 0]} />
         </Canvas>
       </Stage>
       {note && <Note>{note}</Note>}
-      {debug && <Debug>{debug}</Debug>}
+      {showDebug && debug && <Debug>{debug}</Debug>}
 
       <InputContainer>
         <Input

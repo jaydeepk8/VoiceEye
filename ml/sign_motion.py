@@ -60,6 +60,33 @@ def make_detectors():
     return pose, hands
 
 
+def assign_hands(detected, screen):
+    """Give each detected hand to the person's left or right arm by position.
+
+    MediaPipe's own Left/Right label follows a mirrored-selfie convention and
+    was wrong for this footage. Which pose wrist a hand sits on is not a
+    convention, it is geometry.
+    """
+    if not detected or not screen:
+        return None, None
+    wrists = {
+        "l": np.array(screen[15][:2]),
+        "r": np.array(screen[16][:2]),
+    }
+
+    def cost(hand, side):
+        return float(np.linalg.norm(np.array(hand[0][:2]) - wrists[side]))
+
+    if len(detected) == 1:
+        hand = detected[0]
+        return (hand, None) if cost(hand, "l") <= cost(hand, "r") else (None, hand)
+
+    a, b = detected[0], detected[1]
+    straight = cost(a, "l") + cost(b, "r")
+    crossed = cost(a, "r") + cost(b, "l")
+    return (a, b) if straight <= crossed else (b, a)
+
+
 def extract(path: Path, pose, hands, clock: int, max_width: int = 720):
     capture = cv2.VideoCapture(str(path))
     fps = capture.get(cv2.CAP_PROP_FPS) or 25.0
@@ -91,22 +118,18 @@ def extract(path: Path, pose, hands, clock: int, max_width: int = 720):
             if pose_result.pose_landmarks:
                 screen = [[p.x, p.y, p.z] for p in pose_result.pose_landmarks[0]]
 
-            left = right = None
-            handedness = hand_result.handedness or []
-            for slot, marks in enumerate(hand_result.hand_world_landmarks or []):
-                points = [[p.x, p.y, p.z] for p in marks]
-                label = handedness[slot][0].category_name if slot < len(handedness) else ""
-                if label == "Left":
-                    left = points
-                else:
-                    right = points
+            detected = [
+                [[p.x, p.y, p.z] for p in marks]
+                for marks in (hand_result.hand_landmarks or [])
+            ]
+            lhand, rhand = assign_hands(detected, screen)
 
             frames.append({
                 "pose": body,
                 "screen": screen,
                 "aspect": frame.shape[1] / frame.shape[0],
-                "left": left,
-                "right": right,
+                "lhand": lhand,
+                "rhand": rhand,
             })
             index += 1
     finally:
@@ -155,7 +178,7 @@ def main() -> int:
 
                     usable = sum(
                         1 for f in frames
-                        if f["pose"] and (f["left"] or f["right"])
+                        if f["pose"] and (f["lhand"] or f["rhand"])
                     )
                     target = OUT_DIR / f"{word}.json"
                     target.write_text(

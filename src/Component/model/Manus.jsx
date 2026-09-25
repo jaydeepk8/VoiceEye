@@ -6,7 +6,7 @@ import { applyPose, buildRig, frameAt, restPose } from "./signRig";
 const MODEL = "/aniavatar.glb";
 const BLEND = 0.35;
 
-function Manus({ sign = null, onFinished, onDebug }) {
+function Manus({ sign = null, onFinished, onDebug, freezeAt = null }) {
   const group = useRef();
   const { scene, animations } = useGLTF(MODEL);
   const { actions } = useAnimations(animations, group);
@@ -79,6 +79,10 @@ function Manus({ sign = null, onFinished, onDebug }) {
       );
     }
     if (!rig || !clip) return;
+    if (freezeAt !== null) {
+      applyPose(rig, frameAt(clip, freezeAt), BLEND);
+      return;
+    }
     elapsed.current += delta;
     const duration = clip.frameCount / clip.fps;
     if (elapsed.current >= duration) {

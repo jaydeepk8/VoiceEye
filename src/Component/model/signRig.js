@@ -46,9 +46,28 @@ export function buildRig(scene) {
     const bindWorldQuat = new Quaternion();
     bone.getWorldQuaternion(bindWorldQuat);
 
-    const restUp = new Vector3(0, 0, 1).applyQuaternion(
-      bindWorldQuat.clone().invert(),
-    );
+    let restUp = null;
+    if (name === "LeftHand" || name === "RightHand") {
+      const side = name.startsWith("Left") ? "Left" : "Right";
+      const index = bones.get(`${side}HandIndex1`);
+      const pinky = bones.get(`${side}HandPinky1`);
+      const middle = bones.get(`${side}HandMiddle1`);
+      if (index && pinky && middle) {
+        const at = (node) => {
+          const v = new Vector3();
+          node.getWorldPosition(v);
+          return v;
+        };
+        const forward = at(middle).sub(boneWorld);
+        const across = at(pinky).sub(at(index));
+        const normal = new Vector3().crossVectors(forward, across);
+        if (normal.lengthSq() > 1e-12) {
+          restUp = normal
+            .normalize()
+            .applyQuaternion(bindWorldQuat.clone().invert());
+        }
+      }
+    }
 
     rig.set(name, {
       bone,

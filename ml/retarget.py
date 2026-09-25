@@ -1,16 +1,7 @@
-"""Turn extracted sign motion into bone directions the avatar can follow.
+"""Turn extracted sign motion into bone directions for the avatar.
 
+    python ml/retarget.py
     python ml/retarget.py --words hello
-
-Reads data/motion/<word>.json and writes public/signs/<word>.motion.json.
-
-Emits direction vectors per bone rather than quaternions. The browser has the
-live skeleton with its bind pose and parent transforms, so turning a direction
-into a local rotation is a few lines there and a reimplementation of three.js
-here. Directions are also inspectable: a wrong one is visible as a number.
-
-Axes are converted from MediaPipe world space (Y down, metres, origin at the
-hips) to the three.js convention of Y up.
 """
 
 from __future__ import annotations
@@ -28,9 +19,9 @@ OUT_DIR = ROOT / "public" / "signs"
 L_SHOULDER, R_SHOULDER = 11, 12
 L_ELBOW, R_ELBOW = 13, 14
 L_WRIST, R_WRIST = 15, 16
-MIN_HAND_COVERAGE = 0.7
+MIN_HAND_COVERAGE = 0.6
 
-ARM_CHAIN = {
+SEGMENTS = {
     "LeftArm": (L_SHOULDER, L_ELBOW),
     "LeftForeArm": (L_ELBOW, L_WRIST),
     "RightArm": (R_SHOULDER, R_ELBOW),
@@ -60,12 +51,114 @@ def unit(vector: np.ndarray) -> list[float] | None:
     return [round(float(v), 4) for v in (vector / length)]
 
 
-def fill_gaps(series: list[list[float] | None], limit: int = 4) -> list[list[float] | None]:
-    """Hold the last value across short dropouts.
+def body_frame(frame: dict):
+    screen = frame.get("screen")
+    if not screen:
+        return None
+    flat = np.asarray(screen, dtype=np.float64)[:, :2].copy()
+    aspect = float(frame.get("aspect") or 1.0)
+    flat[:, 0] *= aspect
+    origin = (flat[L_SHOULDER] + flat[R_SHOULDER]) / 2.0
+    span = float(np.linalg.norm(flat[L_SHOULDER] - flat[R_SHOULDER]))
+    if span < 1e-6:
+        return None
+    return origin, span, aspect
 
-    A hand that vanishes for two frames and reappears would otherwise snap to
-    rest and back, which reads as a flinch rather than a sign.
-    """
+
+def body_points(frame: dict, ref) -> np.ndarray:
+    origin, span, aspect = ref
+    flat = np.asarray(frame["screen"], dtype=np.float64)[:, :2].copy()
+    flat[:, 0] *= aspect
+    return (flat - origin) / span
+
+
+def hand_points(hand: list, ref) -> np.ndarray:
+    origin, span, aspect = ref
+    raw = np.asarray(hand, dtype=np.float64)
+    flat = raw[:, :2].copy()
+    flat[:, 0] *= aspect
+    flat = (flat - origin) / span
+    depth = raw[:, 2] * aspect / span
+    return np.column_stack([flat, depth])
+
+
+def segment_lengths(frames: list) -> dict[str, float | None]:
+    seen: dict[str, list[float]] = {name: [] for name in SEGMENTS}
+    for frame in frames:
+        ref = body_frame(frame)
+        if ref is None:
+            continue
+        points = body_points(frame, ref)
+        for name, (a, b) in SEGMENTS.items():
+            seen[name].append(float(np.linalg.norm(points[b] - points[a])))
+    return {
+        name: float(np.percentile(values, 95)) if values else None
+        for name, values in seen.items()
+    }
+
+
+def depth_signs(frames: list, window: int = 3) -> dict[str, list[float]]:
+    raw: dict[str, list[float]] = {name: [] for name in SEGMENTS}
+    for frame in frames:
+        world = frame.get("pose")
+        for name, (a, b) in SEGMENTS.items():
+            raw[name].append(world[b][2] - world[a][2] if world else np.nan)
+    smoothed: dict[str, list[float]] = {}
+    for name, series in raw.items():
+        values = np.asarray(series, dtype=np.float64)
+        out = []
+        for i in range(len(values)):
+            near = values[max(0, i - window): i + window + 1]
+            near = near[~np.isnan(near)]
+            out.append(float(near.mean()) if len(near) else 0.0)
+        smoothed[name] = out
+    return smoothed
+
+
+def arm_row(frame: dict, index: int, lengths: dict, signs: dict) -> dict:
+    row: dict = {name: None for name in SEGMENTS}
+    ref = body_frame(frame)
+    if ref is None:
+        return row
+    points = body_points(frame, ref)
+    for name, (a, b) in SEGMENTS.items():
+        true_length = lengths.get(name)
+        if not true_length:
+            continue
+        planar = points[b] - points[a]
+        flat_length = float(np.linalg.norm(planar))
+        depth = np.sqrt(max(0.0, true_length * true_length - flat_length * flat_length))
+        lifted = np.array([planar[0], planar[1], np.sign(signs[name][index]) * depth])
+        row[name] = unit(to_three(lifted))
+    return row
+
+
+def hand_keys(side: str) -> list[str]:
+    keys = [f"{side}Hand", f"{side}Hand_up"]
+    for finger in FINGERS:
+        keys.extend(f"{side}Hand{finger}{n}" for n in (1, 2, 3))
+    return keys
+
+
+def hand_row(hand: list | None, frame: dict, side: str) -> dict:
+    row: dict = {key: None for key in hand_keys(side)}
+    ref = body_frame(frame)
+    if not hand or ref is None:
+        return row
+    points = hand_points(hand, ref)
+    forward = to_three(points[9] - points[0])
+    across = to_three(points[17] - points[5])
+    row[f"{side}Hand"] = unit(forward)
+    row[f"{side}Hand_up"] = unit(np.cross(forward, across))
+    for finger, joints in FINGERS.items():
+        for n in range(3):
+            row[f"{side}Hand{finger}{n + 1}"] = unit(
+                to_three(points[joints[n + 1]] - points[joints[n]])
+            )
+    return row
+
+
+def fill_gaps(series: list, limit: int = 4) -> list:
     out = list(series)
     last = None
     gap = 0
@@ -80,149 +173,70 @@ def fill_gaps(series: list[list[float] | None], limit: int = 4) -> list[list[flo
     return out
 
 
-def smooth(series: list[list[float] | None], window: int = 7) -> list[list[float] | None]:
-    known = [i for i, v in enumerate(series) if v is not None]
-    if not known:
-        return series
-    out: list[list[float] | None] = list(series)
+def smooth(series: list, window: int = 5) -> list:
+    out = list(series)
     half = window // 2
-    for i in known:
-        near = [series[j] for j in range(max(0, i - half), min(len(series), i + half + 1))
-                if series[j] is not None]
-        if not near:
+    for i, value in enumerate(series):
+        if value is None:
             continue
+        near = [
+            series[j]
+            for j in range(max(0, i - half), min(len(series), i + half + 1))
+            if series[j] is not None
+        ]
         mean = np.mean(np.asarray(near, dtype=np.float64), axis=0)
-        out[i] = unit(mean) or series[i]
+        out[i] = unit(mean) or value
     return out
 
 
-def body_points(frame: dict) -> np.ndarray | None:
-    """Combine image-space X/Y with world Z into one body-relative frame.
-
-    MediaPipe's world landmarks badly understate how high an arm is raised --
-    on this clip the wrist peaks 2cm above the shoulder where the image says
-    17cm. Image-space X/Y is directly observed and matches the video; depth is
-    only available from the world estimate. Taking each from where it is
-    trustworthy, in shoulder-width units so the two agree on scale.
-    """
-    screen = frame.get("screen")
-    world = frame.get("pose")
-    if not screen or not world:
-        return None
-
-    flat = np.asarray(screen, dtype=np.float64)[:, :2].copy()
-    flat[:, 0] *= float(frame.get("aspect") or 1.0)
-    origin = (flat[L_SHOULDER] + flat[R_SHOULDER]) / 2.0
-    span = float(np.linalg.norm(flat[L_SHOULDER] - flat[R_SHOULDER]))
-    if span < 1e-6:
-        return None
-    flat = (flat - origin) / span
-
-    solid = np.asarray(world, dtype=np.float64)
-    depth_span = float(np.linalg.norm(solid[L_SHOULDER] - solid[R_SHOULDER]))
-    if depth_span < 1e-6:
-        return None
-    depth = (solid[:, 2] - solid[[L_SHOULDER, R_SHOULDER], 2].mean()) / depth_span
-
-    return np.column_stack([flat[:, 0], flat[:, 1], depth])
-
-
-def arm_directions(frame: dict) -> dict[str, list[float] | None]:
-    points = body_points(frame)
-    if points is None:
-        return {name: None for name in ARM_CHAIN}
-    result = {}
-    for bone, (start, end) in ARM_CHAIN.items():
-        result[bone] = unit(to_three(points[end] - points[start]))
-
-    # The elbow hinges in the plane through shoulder, elbow and wrist. Without
-    # pinning the upper arm's twist to that plane the forearm bends sideways,
-    # which is what makes the pose look broken rather than merely wrong.
-    for side, (sh, el, wr) in (
-        ("Left", (L_SHOULDER, L_ELBOW, L_WRIST)),
-        ("Right", (R_SHOULDER, R_ELBOW, R_WRIST)),
-    ):
-        upper = to_three(points[el] - points[sh])
-        lower = to_three(points[wr] - points[el])
-        normal = np.cross(upper, lower)
-        if np.linalg.norm(normal) > 1e-5:
-            axis = unit(normal)
-            if axis:
-                result[f"{side}Arm_up"] = axis
-                result[f"{side}ForeArm_up"] = axis
-    return result
-
-
-def hand_directions(hand: list[list[float]] | None, side: str) -> dict[str, list[float] | None]:
-    result: dict[str, list[float] | None] = {}
-    if not hand:
-        for finger, joints in FINGERS.items():
-            for n in range(len(joints) - 1):
-                result[f"{side}Hand{finger}{n + 1}"] = None
-        result[f"{side}Hand"] = None
-        return result
-
-    points = np.asarray(hand, dtype=np.float64)
-
-    # A direction alone leaves the bone free to spin about its own axis, so the
-    # palm can end up facing anywhere. Sending a second axis across the
-    # knuckles pins the roll, which is what makes a handshape readable.
-    forward = to_three(points[9] - points[0])
-    across = to_three(points[17] - points[5])
-    normal = np.cross(forward, across)
-    result[f"{side}Hand"] = unit(forward)
-    if np.linalg.norm(normal) > 1e-6 and result[f"{side}Hand"]:
-        result[f"{side}Hand_up"] = unit(normal)
-    for finger, joints in FINGERS.items():
-        for n in range(len(joints) - 1):
-            a, b = joints[n], joints[n + 1]
-            result[f"{side}Hand{finger}{n + 1}"] = unit(to_three(points[b] - points[a]))
-    return result
-
-
-def build(word: str, source: Path, do_fingers: bool) -> dict:
+def build(word: str, source: Path) -> dict:
     data = json.loads(source.read_text(encoding="utf-8"))
     frames = data["frames"]
+    lengths = segment_lengths(frames)
+    signs = depth_signs(frames)
 
-    per_bone: dict[str, list[list[float] | None]] = {}
-    for frame in frames:
-        row = arm_directions(frame)
-        if do_fingers:
-            row.update(hand_directions(frame.get("left"), "Right"))
-            row.update(hand_directions(frame.get("right"), "Left"))
+    per_bone: dict[str, list] = {}
+    for index, frame in enumerate(frames):
+        row = arm_row(frame, index, lengths, signs)
+        row.update(hand_row(frame.get("lhand"), frame, "Left"))
+        row.update(hand_row(frame.get("rhand"), frame, "Right"))
         for bone, value in row.items():
             per_bone.setdefault(bone, []).append(value)
 
     total = len(frames)
     for side in ("Left", "Right"):
-        hand_bones = [b for b in per_bone if b.startswith(f"{side}Hand")]
-        if not hand_bones:
-            continue
-        seen = sum(1 for v in per_bone[f"{side}Hand"] if v is not None)
+        root = f"{side}Hand"
+        seen = sum(1 for v in per_bone.get(root, []) if v is not None)
         if seen < total * MIN_HAND_COVERAGE:
-            # A hand tracked in only part of the clip is the resting one caught
-            # in glimpses. Its direction jumps between real and noise, which
-            # looks like a spasm; leaving it at rest is both calmer and truer.
-            for bone in hand_bones:
-                per_bone[bone] = [None] * total
+            for bone in per_bone:
+                if bone.startswith(root):
+                    per_bone[bone] = [None] * total
 
     for bone in per_bone:
         per_bone[bone] = smooth(fill_gaps(per_bone[bone]))
 
-    tracked = {b: sum(1 for v in per_bone[b] if v is not None) for b in per_bone}
+    for side in ("Left", "Right"):
+        forward_series = per_bone.get(f"{side}Hand", [])
+        up_series = per_bone.get(f"{side}Hand_up", [])
+        for i, (forward, up) in enumerate(zip(forward_series, up_series)):
+            if forward is None or up is None:
+                continue
+            f = np.asarray(forward, dtype=np.float64)
+            u = np.asarray(up, dtype=np.float64)
+            up_series[i] = unit(u - (u @ f) * f)
+
     return {
         "word": word,
         "fps": data.get("fps", 25),
-        "frameCount": len(frames),
+        "frameCount": total,
         "bones": per_bone,
-        "tracked": tracked,
+        "lengths": {k: round(v, 3) if v else None for k, v in lengths.items()},
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--words", help="comma separated; default all extracted")
-    parser.add_argument("--no-fingers", action="store_true")
     args = parser.parse_args()
 
     wanted = (
@@ -235,21 +249,21 @@ def main() -> int:
         return 1
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    written = 0
     for source in sources:
         word = source.stem
         if wanted and word not in wanted:
             continue
-        clip = build(word, source, not args.no_fingers)
+        clip = build(word, source)
+        lengths = {len(v) for v in clip["bones"].values()}
         target = OUT_DIR / f"{word}.motion.json"
         target.write_text(json.dumps(clip), encoding="utf-8")
-        arms = {b: c for b, c in clip["tracked"].items() if "Arm" in b}
+        hands = [
+            side for side in ("Left", "Right")
+            if any(v for v in clip["bones"][f"{side}Hand"])
+        ]
         print(f"  {word:16s} {clip['frameCount']:3d} frames  "
-              f"{len(clip['bones'])} bones  {target.stat().st_size/1024:.0f} KB")
-        print(f"  {'':16s} arms tracked: {arms}")
-        written += 1
-
-    print(f"\nwrote {written} clip(s) to {OUT_DIR}")
+              f"series lengths {sorted(lengths)}  hands {hands}  "
+              f"{target.stat().st_size / 1024:.0f} KB")
     return 0
 
 
