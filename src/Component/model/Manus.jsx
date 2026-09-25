@@ -54,7 +54,7 @@ function Manus({ sign = null, onFinished }) {
       return;
     }
     applyPose(rig, frameAt(clip, elapsed.current), BLEND);
-  }, 1);
+  });
 
   return (
     <group ref={group} dispose={null}>
