@@ -18,8 +18,18 @@ function Manus({ sign = null, onFinished, onDebug }) {
 
   useEffect(() => {
     if (!onDebug) return;
-    onDebug(`rig=${rig ? rig.size : "null"} bones`);
-  }, [rig, onDebug]);
+    const found = [];
+    let bones = 0;
+    scene.traverse((node) => {
+      if (node.isBone) {
+        bones += 1;
+        if (found.length < 4) found.push(node.name);
+      }
+    });
+    onDebug(
+      `rig=${rig ? rig.size : "null"} sceneBones=${bones} sample=[${found.join("|")}]`,
+    );
+  }, [rig, onDebug, scene]);
 
   useEffect(() => {
     const idle = Object.values(actions).filter(Boolean);
