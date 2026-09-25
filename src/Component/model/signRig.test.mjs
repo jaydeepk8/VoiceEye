@@ -1,24 +1,24 @@
 import { Bone, Vector3 } from "three";
 import { applyPose, buildRig } from "./signRig.js";
 
-function chain() {
+function chain(sep = ":") {
   const root = new Bone();
-  root.name = "mixamorig:Hips";
+  root.name = `mixamorig${sep}Hips`;
 
   const arm = new Bone();
-  arm.name = "mixamorig:LeftArm";
+  arm.name = `mixamorig${sep}LeftArm`;
   arm.position.set(0, 0, 0);
 
   const fore = new Bone();
-  fore.name = "mixamorig:LeftForeArm";
+  fore.name = `mixamorig${sep}LeftForeArm`;
   fore.position.set(0, -1, 0);
 
   const hand = new Bone();
-  hand.name = "mixamorig:LeftHand";
+  hand.name = `mixamorig${sep}LeftHand`;
   hand.position.set(0, -1, 0);
 
   const mid = new Bone();
-  mid.name = "mixamorig:LeftHandMiddle1";
+  mid.name = `mixamorig${sep}LeftHandMiddle1`;
   mid.position.set(0, -0.2, 0);
 
   hand.add(mid);
@@ -81,6 +81,23 @@ let failures = 0;
   const foreOk = check("chained: forearm -> +Y", worldDir(fore, hand), new Vector3(0, 1, 0));
   if (!armOk) failures += 1;
   if (!foreOk) failures += 1;
+}
+
+for (const sep of ["_", "", "-", "."]) {
+  const { root, arm, fore } = chain(sep);
+  const rig = buildRig(root);
+  const mapped = rig ? rig.size : 0;
+  const ok = Boolean(rig && rig.has("LeftArm"));
+  console.log(`${ok ? "pass" : "FAIL"}  name separator '${sep}' -> mapped=${mapped}`);
+  if (!ok) {
+    failures += 1;
+    continue;
+  }
+  applyPose(rig, { LeftArm: [0, 1, 0] }, 1);
+  root.updateMatrixWorld(true);
+  if (!check(`  '${sep}' arm -> +Y`, worldDir(arm, fore), new Vector3(0, 1, 0))) {
+    failures += 1;
+  }
 }
 
 console.log(failures ? `\n${failures} failure(s)` : "\nall passed");

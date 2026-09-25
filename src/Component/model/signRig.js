@@ -1,6 +1,6 @@
 import { Quaternion, Vector3 } from "three";
 
-const PREFIX = "mixamorig:";
+const PREFIX = /^mixamorig[:_\-.]?/i;
 
 const CHILD_OF = {
   LeftArm: "LeftForeArm",
