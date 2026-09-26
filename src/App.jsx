@@ -3,6 +3,7 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
+  Navigate,
   useLocation,
 } from "react-router-dom";
 import Header from "./Component/header/Header";
@@ -37,6 +38,7 @@ function App() {
       <Route path="/Manus" element={<Manus />} />
 
       <Route path="/Footers" element={<Footers />} />
+      <Route path="*" element={<Navigate to="/Home" replace />} />
     </Routes>
   );
 }

@@ -220,12 +220,12 @@ const exploreAudioRef = useRef(null);
 </ParentDiv>
       </StyledHoverWrapper>
       <StyleSmallTitle 
-        onClick={() => navigate('/FirstSection')}
+        onClick={() => navigate('/Home')}
         onMouseEnter={() => setIsHovered(true)} // Set isHovered to true when mouse enters
         onMouseLeave={() => setIsHovered(false)} // Set isHovered to false when mouse leaves
       >  
         By entering the site, you will able to see the content of the site.
-        For more info click on  <a href="your_website_url">Explore</a>.
+        For more info click on Explore.
       </StyleSmallTitle>
     </StyledLoader>
   );

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 const StyledHeader = styled.div`
@@ -17,7 +18,7 @@ const StyledHeader = styled.div`
   }
 `;
 
-const Logo = styled.div`
+const Logo = styled(Link)`
   color: #ffffff;
   font-family: "Libre Caslon Display", sans-serif;
   font-size: 48px;
@@ -46,7 +47,7 @@ const NavLinks = styled.div`
   }
 `;
 
-const NavLink = styled.a`
+const NavLink = styled(Link)`
   position: relative;
   display: inline-block;
   padding: 10px 20px;
@@ -117,22 +118,37 @@ const Hamburger = styled.div`
 
 function Header() {
   const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
 
   return (
     <StyledHeader>
-      <Logo>VoiceEye</Logo>
+      <Logo to="/Home" onClick={() => setOpen(false)}>
+        VoiceEye
+      </Logo>
       <Hamburger open={open} onClick={() => setOpen(!open)}>
         <div />
         <div />
         <div />
       </Hamburger>
       <NavLinks open={open}>
-        <NavLink href="https://chic-arithmetic-3e447a.netlify.app/">
+        <NavLink to="/Home" onClick={close}>
           Home
         </NavLink>
-        <NavLink href="#">Project</NavLink>
-        <NavLink href="https://voice-isl.vercel.app/">ISL to Voice</NavLink>
-        <NavLink href="https://voice-eye.vercel.app/test">Voice to ISL</NavLink>
+        <NavLink to="/Blind" onClick={close}>
+          ISL to Voice
+        </NavLink>
+        <NavLink to="/Deaf" onClick={close}>
+          Voice to ISL
+        </NavLink>
+        <NavLink
+          as="a"
+          href="https://github.com/jaydeepk8/VoiceEye"
+          target="_blank"
+          rel="noreferrer"
+          onClick={close}
+        >
+          Project
+        </NavLink>
       </NavLinks>
     </StyledHeader>
   );

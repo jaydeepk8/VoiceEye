@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import Globe from "./Globe";
 import Shaders from "./Shaders";
@@ -110,6 +111,11 @@ const ChildDiv1 = styled.div`
     color: black;
     transition: 0.9s;
   }
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  &:hover {
+    opacity: 0.6;
+  }
 `;
 
 const ChildDiv2 = styled.div`
@@ -129,6 +135,11 @@ const ChildDiv2 = styled.div`
     background-color: #76beb9;
     color: black;
     transition: 0.9s;
+  }
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  &:hover {
+    opacity: 0.6;
   }
 `;
 
@@ -150,6 +161,11 @@ const ChildDiv3 = styled.div`
     color: black;
     transition: 0.9s;
   }
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  &:hover {
+    opacity: 0.6;
+  }
 `;
 
 const ChildDiv4 = styled.div`
@@ -169,6 +185,11 @@ const ChildDiv4 = styled.div`
     background-color: white;
     color: black;
     transition: 0.9s;
+  }
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  &:hover {
+    opacity: 0.6;
   }
 `;
 
@@ -258,6 +279,7 @@ const Circle2 = styled(Circle)`
 `;
 
 function Footers() {
+  const navigate = useNavigate();
   return (
     <footer>
       <StyledFooters>
@@ -275,16 +297,22 @@ function Footers() {
         </LeftDiv>
 
         <RightDiv>
-          <ChildDiv1>About</ChildDiv1>
-          <ChildDiv2>Project</ChildDiv2>
-          <ChildDiv3>Goal</ChildDiv3>
-          <ChildDiv4>Contact</ChildDiv4>
+          <ChildDiv1 onClick={() => navigate("/Home")}>About</ChildDiv1>
+          <ChildDiv2
+            onClick={() =>
+              window.open("https://github.com/jaydeepk8/VoiceEye", "_blank", "noreferrer")
+            }
+          >
+            Project
+          </ChildDiv2>
+          <ChildDiv3 onClick={() => navigate("/Blind")}>ISL to Voice</ChildDiv3>
+          <ChildDiv4 onClick={() => navigate("/Deaf")}>Voice to ISL</ChildDiv4>
         </RightDiv>
 
         <BottomDiv>
           <BottomLeftDiv>Voice Eye Project</BottomLeftDiv>
           <BottomCenterDiv>VoiceEye</BottomCenterDiv>
-          <BottomRightDiv>@Copyright 2024</BottomRightDiv>
+          <BottomRightDiv>@Copyright 2026</BottomRightDiv>
         </BottomDiv>
       </StyledFooters>
     </footer>

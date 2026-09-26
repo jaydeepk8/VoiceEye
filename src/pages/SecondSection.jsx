@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import backgroundImage from '/assets/images/image2.png';
 
@@ -125,18 +126,20 @@ margin-top: 10px // Adjust this value as needed to move the button up
 `;
 
 function SecondSection() {
+  const navigate = useNavigate();
+
   return (
     <MainSection>
       <div>
         <StyledLeftH2>Voice to Indian sign language.</StyledLeftH2>
         <StyledLeftH4>This ISL is used for easily communicate between deaf and blind.</StyledLeftH4>
-        <StyledButton1>Try Now</StyledButton1>
+        <StyledButton1 onClick={() => navigate("/Deaf")}>Try Now</StyledButton1>
       </div>
 
       <div>
         <StyledRightH2>Indian sign language to voice.</StyledRightH2>
         <StyledRightH4>This ISL is used for easily communicate between deaf and blind.</StyledRightH4>
-        <StyledButton2>Try Now</StyledButton2>
+        <StyledButton2 onClick={() => navigate("/Blind")}>Try Now</StyledButton2>
       </div>
     </MainSection>
   );

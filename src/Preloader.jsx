@@ -144,7 +144,7 @@ function Preloader() {
         </StyledSvg1>
       </StyledHoverWrapper>
       {/* Text is always visible */}
-      <StyledH2 onClick={() => navigate('/FirstSection')}>Explore</StyledH2>
+      <StyledH2 onClick={() => navigate('/Home')}>Explore</StyledH2>
   
     </StyledPreloader>
   );
