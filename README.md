@@ -1,96 +1,106 @@
 # VoiceEye
 
-A deaf person and a blind person can't easily talk to each other. Signing needs
-eyes, speaking needs ears. VoiceEye translates both ways.
+If someone is deaf and someone else is blind, they can't really talk to each
+other. One can't hear, the other can't see the signs. VoiceEye tries to fix
+that by translating both ways.
 
-- **Sign to voice**: sign at your camera, it says the word out loud.
-- **Voice to sign**: speak or type, an avatar signs it back.
+- **Sign to voice**: sign in front of your camera, it speaks the word.
+- **Voice to sign**: say or type something, an avatar signs it back to you.
 
-Live at [voice-eye.vercel.app](https://voice-eye.vercel.app). Nine ISL words so
-far: hello, thank you, how are you, pleased, alright, and good morning /
-afternoon / evening / night.
+Live here: [voice-eye.vercel.app](https://voice-eye.vercel.app). Right now it
+knows 9 ISL words - hello, thank you, how are you, pleased, alright, and good
+morning / afternoon / evening / night.
 
-Rebuild of the system from the ICCUBEA 2024 paper
+This is a rebuild of a project from a 2024 paper we published,
 *VoiceEye: A Communication Aid Between a Voiceless and Sightless*
-([doi](https://doi.org/10.1109/ICCUBEA61740.2024.10775052)).
+([link](https://doi.org/10.1109/ICCUBEA61740.2024.10775052)). The paper version
+never actually worked end to end. This one does.
 
 ## Sign to voice
 
-MediaPipe runs in the browser and tracks your hands and upper body. Those points
-go to a FastAPI server over a websocket. The server normalises them, runs a
-45-frame window through a GRU, and sends a word back. The page speaks it.
+Your camera feeds MediaPipe in the browser, which tracks your hands and body.
+Those points get sent to a small Python server. The server does some math on
+them and feeds a window of frames into a GRU model, which guesses the word.
+Browser speaks it out loud.
 
-Landmarks go over the wire, not video. That's 4.9KB a frame instead of a 10KB
-JPEG, and the server barely works: 0.09s per 50 frames instead of 3.4s. On a
-free Render box it's the difference between 9fps and 2.5.
+We send just the tracked points, not the video itself. Way less data, and it
+means the server barely has to do any work - went from taking 3.4 seconds to
+process 50 frames down to 0.09 seconds. On the free hosting we're using that's
+the difference between the thing being usable and not.
 
-The hard part isn't which sign, it's when. The model guesses thirty times a
-second. `live.py` only speaks if the hands are moving, confidence holds, the same
-word repeats a few frames, and it hasn't just spoken. Otherwise it babbles.
+The annoying part wasn't recognizing signs, it was figuring out when someone
+actually finished a sign. The model spits out a guess constantly, so if you
+don't filter that it just talks nonsense the whole time. Had to add checks -
+are the hands even moving, is it confident, has it said the same word a few
+times in a row, did it already just say something. Fixed the babbling.
 
 ## Voice to sign
 
-Nobody animated the avatar by hand. The motion comes from the same INCLUDE clips
-the recogniser trained on, so both halves know the same nine words.
+Nobody sat down and animated the avatar doing each sign. We took the same
+video clips we trained the recognizer on and copied the motion from those onto
+the 3D model.
 
-`sign_motion.py` reads the source videos, `retarget.py` turns each frame into
-bone directions. The browser already has the skeleton, so it does the rotation
-maths. Directions are also easy to debug, since a wrong one is just a number you
-can read.
+Scripts do the actual work - one pulls landmark data out of the source videos,
+another converts that into rotations for the avatar's bones. Wasn't as simple
+as it sounds though, ran into a bunch of problems getting it to look right
+instead of like a broken puppet:
 
-Stuff that was broken before it stopped looking like a puppet:
+- MediaPipe's depth estimate is just bad for this. It thought a raised wrist
+  was barely above the shoulder when the video shows it clearly way higher. Had
+  to calculate depth ourselves based on how much shorter a limb looks when it's
+  angled toward the camera.
+- The hand tracking and body tracking use different coordinate systems, so
+  combining them directly gave garbage - like the same finger pointing two
+  completely different directions depending which one you trusted.
+- MediaPipe also mixed up left and right hands in this footage, so we had to
+  match hands to wrists ourselves instead of trusting its labels.
+- Even after fixing direction, the arm could still be twisted weird, palm
+  facing backwards etc, because a direction alone doesn't tell you rotation.
+  Had to lock that down using the elbow and knuckle positions.
 
-- MediaPipe's 3D output is bad here. It put the wrist 2cm above the shoulder
-  when the video clearly shows 17cm. X and Y now come from the flat image
-  positions, and depth from how foreshortened a limb looks against its real
-  length.
-- Hand points and body points use different axes. Same finger, two methods,
-  100+ degrees apart.
-- MediaPipe's left/right hand labels are mirrored on this footage. Each hand now
-  goes to whichever wrist it's nearest.
-- A direction says where a bone points, not how it's twisted. Elbows bent
-  sideways and palms faced backwards. The shoulder-elbow-wrist plane fixes the
-  arm, the knuckle line fixes the hand.
+When it's not signing anything it just stands there, but not frozen - it
+breathes a little, looks around, blinks sometimes. Made it feel less dead.
 
-Between signs it stands still, breathes, glances around and blinks. That resting
-pose is taken from how the dataset signers stand before they start, so going
-into a sign doesn't jump.
+## How accurate is it
 
-## How well it works
-
-Nine words, 189 clips. Scored by holding out a whole recording session and
-retraining from scratch.
+Trained and tested on 189 clips across 9 words. Tested properly too - held out
+an entire recording session and trained on everything else, not just a random
+split of the same footage.
 
 | Words | Accuracy |
 |---|---|
-| 5 | 0.917 |
-| 9 | 0.671 |
+| 5 | 91.7% |
+| 9 | 67.1% |
 
-Chance is 0.20 and 0.11. Published results on the full
-[INCLUDE](https://zenodo.org/records/4010759) benchmark are 94.5% on its 50-word
-subset, 85.6% across all 263.
+Random guessing would get 20% and 11% respectively. For reference, the actual
+research dataset we're using ([INCLUDE](https://zenodo.org/records/4010759))
+gets 94.5% on a curated 50-word set and 85.6% across all 263 words in
+published papers.
 
-That 0.671 needs a caveat. INCLUDE doesn't say who signed each clip, so the
-"sessions" are inferred from camera numbering in the filenames. Holding one out
-beats a random split, but it's a recording source, not a person. Until someone
-outside the dataset signs at it, these are floors.
+Being honest about that 67% number though - the dataset doesn't tell you who
+signed which clip, so we had to guess which clips came from the same person
+based on how the video files were numbered. It's better than a random split
+but we still can't say for sure these are different people. Real proof needs
+someone new signing who wasn't in the training data at all.
 
-Two easy ways to fake a better number, both avoided. Splitting clips randomly
-instead of by session gives a perfect 1.000, because INCLUDE's takes are nearly
-identical and the same one lands on both sides. Keeping the best epoch by test
-score adds ~13 points that vanish on new data.
+Also caught ourselves almost cheating on this by accident twice. If you split
+clips randomly instead of by session, you get basically 100% accuracy, because
+the same take of a video ends up split between train and test. And if you let
+the model pick its best-performing epoch based on the test set, you gain like
+13 points that mean nothing on new data. Avoided both.
 
-What actually helped: dropping MediaPipe's depth and widening the window from 30
-to 45 frames, which took five words from 0.730 to 0.917.
+One real improvement that mattered - stripped out the depth values MediaPipe
+gives us (too noisy) and made the model look at longer chunks of video, 45
+frames instead of 30. That alone took the 5-word accuracy from 73% to 91.7%.
 
-It fails predictably. The four time-of-day greetings all share a "good"
-component and get confused with each other. Hello, thank you, how are you and
-pleased are solid.
+Where it messes up is predictable. The four "good ___" signs get confused with
+each other constantly since they all start the same way. Hello, thank you, how
+are you, and pleased work reliably.
 
-## Running it
+## Running it locally
 
-Python 3.12. Not 3.13, MediaPipe has no wheels for it, and NumPy 2.5 won't go
-below 3.12.
+Needs Python 3.12 specifically. MediaPipe doesn't have builds for 3.13 yet and
+newer numpy won't run on anything older than 3.12.
 
 ```
 python -m venv .venv
@@ -100,38 +110,43 @@ npm install
 npm run dev
 ```
 
-The front end points at `VITE_SIGN_SERVER`. That server runs on Render in a
-container. It can't go on Vercel or Netlify, both are serverless and a websocket
-needs something awake. It runs ONNX instead of torch to fit a free instance;
-`export_onnx.py` does the conversion and diffs it against torch first.
+Frontend talks to a server address set in `VITE_SIGN_SERVER`. We host that on
+Render since it needs to stay running for the websocket connection - can't do
+that on Vercel or Netlify. Also swapped torch out for ONNX on the server so it
+fits in a free instance's memory limit.
 
 ```
-python ml/train.py --epochs 30       # train
-python ml/ablate.py                  # cross-validated comparison of settings
-python ml/live.py                    # webcam to console, no browser
-python ml/evaluate.py --signer you   # score against a held-out person
+python ml/train.py --epochs 30       # train the model
+python ml/ablate.py                  # compare different settings properly
+python ml/live.py                    # test with your webcam, no browser needed
+python ml/evaluate.py --signer you   # check accuracy on someone new
 ```
 
-## Recording your own clips
+## Adding your own recordings
 
-Still the main thing missing. Everything in `data/` is INCLUDE. Someone outside
-it needs to sign at the camera before the numbers above mean much.
+This is the thing we still need to do. Right now every clip is from the
+dataset, nobody's actually recorded themselves for testing. Until someone does
+that, the accuracy numbers above aren't fully trustworthy.
 
-You don't need to know ISL. Open the Voice to ISL page, watch the avatar do a
-sign, copy it.
+Good news is you don't need to already know ISL. Just watch the avatar do a
+sign on the site and copy it.
 
 ```
 python ml/record_session.py --signer yourname
 python ml/evaluate.py --signer yourname
 ```
 
-Eight clips a word is about an hour. Move around between takes, change the
-lighting, wear something else, come back another day. Eight identical clips are
-worth much less than eight varied ones. The score will drop. That's the point.
+About an hour to do 8 clips per word. Try to actually vary things while
+recording - different lighting, distance from camera, what you're wearing,
+maybe do it across a couple days instead of all at once. If every clip looks
+identical the model doesn't really learn anything new from having 8 of them.
+Expect the score to drop when you test with real recordings, that's normal and
+expected.
 
-## Checking changes
+## Checking that changes actually work
 
-You can't fix 3D by guessing at it, so:
+3D stuff is hard to debug just by staring at code, so there's tooling to
+compare visually:
 
 ```
 node tools/snap.mjs http://localhost:5173 hello 0.3,0.9,1.5 out
@@ -140,10 +155,11 @@ python tools/montage.py out 0.3,0.9,1.5 compare.png
 node tools/rigcheck.mjs public/aniavatar.glb public/signs/hello.motion.json 0.9
 ```
 
-First three put the avatar next to the real signer at the same timestamp. Last
-one checks the angle between where each bone landed and where the clip wanted
-it. All nine signs come out at 0.0 degrees. `?debug=1` on the Voice to ISL page
-gives a live readout.
+First three grab a screenshot of the avatar and the original video at the same
+moment so you can eyeball them side by side. Last one is more precise - checks
+the actual angle between where a bone ended up versus where it should be.
+Right now every sign comes out to basically 0 degrees off. You can also add
+`?debug=1` to the sign page URL to see live numbers while it's running.
 
 ```
 python ml/test_landmarks.py
@@ -152,20 +168,20 @@ python ml/test_live.py
 node src/Component/model/signRig.test.mjs
 ```
 
-## Layout
+## Project structure
 
 ```
-src/       React front end (Vite)
-ml/        landmarks, training, retargeting, realtime loop
-server/    FastAPI websocket service
-tools/     screenshot and rig-check helpers
-data/      clips and features
+src/       React frontend (Vite)
+ml/        landmark extraction, training, motion retargeting, live recognition
+server/    the websocket server (FastAPI)
+tools/     scripts for screenshotting and checking the rig
+data/      video clips and extracted features
 ```
 
 ## Credits
 
-Dev Jaydeep Kulkarni · UI/UX Gaurav Mali
+Built by Jaydeep Kulkarni, UI/UX by Gaurav Mali.
 
-Sign data and reference motion from
-[INCLUDE](https://zenodo.org/records/4010759) (CC-BY-4.0), AI4Bharat and IIIT-B.
-Avatar rigged with Mixamo.
+Sign videos and motion reference come from
+[INCLUDE](https://zenodo.org/records/4010759) (CC-BY-4.0), made by AI4Bharat
+and IIIT-B. Avatar model rigged in Mixamo.
