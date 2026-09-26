@@ -30,6 +30,7 @@ const Logo = styled(Link)`
     margin-left: 20px;
     font-size: 32px;
   }
+  text-decoration: none;
 `;
 
 const NavLinks = styled.div`

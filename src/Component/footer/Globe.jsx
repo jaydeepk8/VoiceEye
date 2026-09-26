@@ -23,13 +23,16 @@ const Globe = () => {
     const globeRef = useRef();
 
     useEffect(() => {
+        const mount = globeRef.current;
+        if (!mount) return undefined;
+
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, globeRef.current.clientWidth / globeRef.current.clientHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(75, mount.clientWidth / mount.clientHeight, 0.1, 1000);
 
         const renderer = new THREE.WebGLRenderer({ alpha: true }); // Set alpha to true
         renderer.setClearColor(0x000000, 0); // Set clear color to black and fully transparent
-        renderer.setSize(globeRef.current.clientWidth, globeRef.current.clientHeight);
-        globeRef.current.appendChild(renderer.domElement); // Attach the renderer to the DOM
+        renderer.setSize(mount.clientWidth, mount.clientHeight);
+        mount.appendChild(renderer.domElement); // Attach the renderer to the DOM
 
         const spotLight = new THREE.SpotLight(0xffffff);
         spotLight.position.set(100, 100, 100);
@@ -42,8 +45,9 @@ const Globe = () => {
 
         camera.position.z = 90;
 
+        let frame = 0;
         const animate = () => {
-            requestAnimationFrame(animate);
+            frame = requestAnimationFrame(animate);
             earth.rotation.y += 0.005; // Decreased rotation speed
             renderer.render(scene, camera);
         };
@@ -51,16 +55,22 @@ const Globe = () => {
         animate();
 
         const handleResize = () => {
-            camera.aspect = globeRef.current.clientWidth / globeRef.current.clientHeight;
+            if (!mount) return;
+            camera.aspect = mount.clientWidth / mount.clientHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(globeRef.current.clientWidth, globeRef.current.clientHeight);
+            renderer.setSize(mount.clientWidth, mount.clientHeight);
         };
 
         window.addEventListener('resize', handleResize);
 
         return () => {
+            cancelAnimationFrame(frame);
             window.removeEventListener('resize', handleResize);
-            globeRef.current.removeChild(renderer.domElement);
+            if (renderer.domElement.parentNode) {
+                renderer.domElement.parentNode.removeChild(renderer.domElement);
+            }
+            geometry.dispose();
+            renderer.dispose();
         };
     }, []);
 
