@@ -28,11 +28,16 @@ const MainSection = styled.div`
 `;
 const MovingTextContainer = styled.div`
   position: absolute;
-  top: 0%;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 22%;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
 `;
 
 const MovingText = styled.div`
-  margin-top: 8px;
   color: #000;
   font-family: Orbitron;
   font-size: 64px;
