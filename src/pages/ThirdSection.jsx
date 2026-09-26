@@ -32,7 +32,7 @@ const MovingTextContainer = styled.div`
 `;
 
 const MovingText = styled.div`
-  margin-top: 70px;
+  margin-top: 8px;
   color: #000;
   font-family: Orbitron;
   font-size: 64px;
@@ -46,7 +46,7 @@ const MovingText = styled.div`
 
 const GrayWrap = styled.div`
   position: absolute;
-  top: 20%;
+  top: 22%;
 
   height: 75vh;
   width: 90vw;
@@ -130,7 +130,6 @@ const Text = styled.p`
 function ThirdSection() {
   const [activeSection, setActiveSection] = useState(0);
   const sectionRef = useRef(null);
-  console.log("activeSection", activeSection);
   const sectionsData = [
     {
       id: 1,
@@ -166,6 +165,13 @@ function ThirdSection() {
       window.removeEventListener("wheel", handleWheel);
     };
   }, [activeSection, sectionsData.length]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSection((current) => (current + 1) % sectionsData.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [sectionsData.length]);
 
   const text = "What is VoiceEye ";
   const repeatedText = new Array(1000).fill(null).map((_, index) => (

@@ -141,15 +141,6 @@ function Header() {
         <NavLink to="/Deaf" onClick={close}>
           Voice to ISL
         </NavLink>
-        <NavLink
-          as="a"
-          href="https://github.com/jaydeepk8/VoiceEye"
-          target="_blank"
-          rel="noreferrer"
-          onClick={close}
-        >
-          Project
-        </NavLink>
       </NavLinks>
     </StyledHeader>
   );

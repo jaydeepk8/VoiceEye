@@ -290,21 +290,10 @@ function Footers() {
           <StyleGlobe>
             <Globe />
           </StyleGlobe>
-          <StyleGlobeBelow>
-            <EmailText>Email</EmailText>
-            <StyledInput type="text" />
-          </StyleGlobeBelow>
         </LeftDiv>
 
         <RightDiv>
           <ChildDiv1 onClick={() => navigate("/Home")}>About</ChildDiv1>
-          <ChildDiv2
-            onClick={() =>
-              window.open("https://github.com/jaydeepk8/VoiceEye", "_blank", "noreferrer")
-            }
-          >
-            Project
-          </ChildDiv2>
           <ChildDiv3 onClick={() => navigate("/Blind")}>ISL to Voice</ChildDiv3>
           <ChildDiv4 onClick={() => navigate("/Deaf")}>Voice to ISL</ChildDiv4>
         </RightDiv>

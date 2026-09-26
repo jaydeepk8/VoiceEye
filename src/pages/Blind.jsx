@@ -107,7 +107,7 @@ const Page = styled.div`
 
 const Stage = styled.div`
   position: relative;
-  margin-top: 6rem;
+  margin-top: 11rem;
   width: min(720px, 90vw);
   border-radius: 12px;
   overflow: hidden;
