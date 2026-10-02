@@ -108,6 +108,7 @@ class Segmenter:
         if self._streak >= self.agree:
             self._cooling = self.cooldown
             self._streak_label, self._streak = None, 0
+            self._history.clear()
             return label
         return None
 

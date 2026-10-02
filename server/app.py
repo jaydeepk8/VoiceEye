@@ -44,6 +44,13 @@ def find_checkpoint() -> Path | None:
 # Consecutive undetected frames before we treat the signer as gone.
 LOST_AFTER = 10
 
+MOTION_FLOOR = 0.02
+
+# Hands held still this many frames means one sign ended and the next has not
+# begun. The rolling window is cleared there so the next sign is read on its own
+# rather than blended with the one before it.
+STILL_RESET = 12
+
 # A browser streams continuously, so a gap this long means it is gone. Render's
 # proxy does not always forward the close, and without this the handler blocks
 # in receive_bytes still holding the single-signer lock, locking everyone else
@@ -142,6 +149,7 @@ async def sign_socket(socket: WebSocket) -> None:
         session = recogniser.session()
         segmenter = Segmenter(recogniser.labels)
         missed = 0
+        still = 0
 
         await socket.send_json({"type": "ready", "labels": recogniser.labels})
 
@@ -196,8 +204,17 @@ async def sign_socket(socket: WebSocket) -> None:
                     await socket.send_json({"type": "status", "framed": True, "warming": True})
                     continue
 
-                word = segmenter.update(probabilities, motion > 0.02)
+                moving = motion > MOTION_FLOOR
+                still = 0 if moving else still + 1
+                if still == STILL_RESET:
+                    session.reset()
+                    segmenter.reset()
+
+                word = segmenter.update(probabilities, moving)
                 if word:
+                    session.reset()
+                    segmenter.reset()
+                    still = 0
                     await socket.send_json({"type": "sign", "word": word})
                 else:
                     best = int(np.argmax(probabilities))
