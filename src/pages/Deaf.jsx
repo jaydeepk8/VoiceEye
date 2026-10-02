@@ -98,7 +98,11 @@ const InputContainer = styled.div`
   border-radius: 10px;
   border: 1px solid #666;
   height: 50px;
-  width: 40%; // Adjust this value as needed
+  width: 40%;
+  min-width: 300px;
+  max-width: min(520px, calc(100vw - 2rem));
+  box-sizing: border-box;
+  gap: 8px;
 `;
 
 const Input = styled.input`
@@ -150,6 +154,7 @@ const Button = styled.button`
         animation: ${brighten} 0.3s ease-in-out infinite alternate;
       }
     `}
+  flex-shrink: 0;
 `;
 
 function Deaf() {
