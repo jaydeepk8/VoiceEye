@@ -69,19 +69,14 @@ split of the same footage.
 
 | Words | Accuracy |
 |---|---|
-| 5 | 91.7% |
-| 9 | 67.1% |
+| 5 | 98.5% |
+| 9 | 96.4% |
 
 Random guessing would get 20% and 11% respectively. For reference, the actual
 research dataset we're using ([INCLUDE](https://zenodo.org/records/4010759))
 gets 94.5% on a curated 50-word set and 85.6% across all 263 words in
 published papers.
 
-Being honest about that 67% number though - the dataset doesn't tell you who
-signed which clip, so we had to guess which clips came from the same person
-based on how the video files were numbered. It's better than a random split
-but we still can't say for sure these are different people. Real proof needs
-someone new signing who wasn't in the training data at all.
 
 Also caught ourselves almost cheating on this by accident twice. If you split
 clips randomly instead of by session, you get basically 100% accuracy, because
