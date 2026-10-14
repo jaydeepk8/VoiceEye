@@ -69,7 +69,7 @@ split of the same footage.
 
 | Words | Accuracy |
 |---|---|
-| 5 | 98.5% |
+| 5 | 91.7% |
 | 9 | 96.4% |
 
 Random guessing would get 20% and 11% respectively. For reference, the actual
